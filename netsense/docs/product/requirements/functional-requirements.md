@@ -113,8 +113,12 @@ Each topology node SHALL carry a `device_type` attribute: switch, router, firewa
 Phase: 2 | RFC: RFC-003
 
 **FR-TOP-004 - Device Criticality**
-Each device SHALL have a configurable criticality rating from 1 (critical) to 5 (non-critical), defaulting to 3.
-Phase: 2 | RFC: RFC-003
+Each device SHALL have a configurable `operationalCriticality` rating from 1
+(low) to 5 (mission-critical), defaulting to 3 (important). Operational
+criticality SHALL remain independent of operational health, incident severity,
+evidence confidence, observation freshness, monitoring coverage, and management
+state.
+Phase: 2 | RFC: RFC-003 | ADR: ADR-007
 
 **FR-TOP-005 - Topology Visualization**
 The dashboard SHALL render the topology as an interactive force-directed graph using Cytoscape.js, with node size proportional to criticality and node color indicating status.

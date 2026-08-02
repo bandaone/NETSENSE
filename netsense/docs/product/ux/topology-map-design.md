@@ -19,6 +19,10 @@ NetSense Atlas is a living operational model of an IT/OT network. It answers fou
 
 The primary view is therefore an **operational dependency map**. Physical, Layer 2, Layer 3, traffic, and security relationships are available as intentional lenses over the same stable model.
 
+> **Synthetic-data notice:** All organisations, sites, network addresses,
+> assets, incidents, operational processes, people, and relationships used in
+> Atlas examples are fictional and do not represent a real installation.
+
 Atlas is not:
 
 - a generic force-directed constellation;
@@ -322,7 +326,7 @@ Incident mode is entered from an incident, alert, or time marker—not presented
 Contextual inventory tree:
 
 ```text
-Kansanshi Copper Mine
+Mukuba Copper Processing Complex
 ├── Enterprise IT
 ├── Industrial DMZ
 └── Plant OT
@@ -438,7 +442,7 @@ Impact summaries include services and processes:
 ```text
 5 devices affected · 9 at risk · 4 protected
 Crusher Line control unavailable
-Estimated 12 operators affected
+Operator impact: not configured in this synthetic scenario
 Observation confidence 89%
 ```
 
@@ -540,13 +544,13 @@ Illustrative node:
 
 ```json
 {
-  "id": "device:kansanshi:dist-02",
+  "id": "device:mukuba-copper-complex:dist-02",
   "kind": "device",
   "role": "distribution_switch",
   "name": "Dist-02 (Plant)",
   "status": "critical",
-  "criticality": 5,
-  "parent": "zone:kansanshi:plant-ot",
+  "operationalCriticality": 5,
+  "parent": "zone:mukuba-copper-complex:plant-ot",
   "observation": {
     "state": "confirmed",
     "confidence": 0.98,
@@ -560,8 +564,8 @@ Illustrative termination point:
 
 ```json
 {
-  "id": "tp:kansanshi:dist-02:gi1-0-24",
-  "node_id": "device:kansanshi:dist-02",
+  "id": "interface:mukuba-copper-complex:dist-02:gi1-0-24",
+  "node_id": "device:mukuba-copper-complex:dist-02",
   "name": "Gi1/0/24",
   "oper_state": "down",
   "speed_bps": 1000000000
@@ -572,10 +576,10 @@ Illustrative link:
 
 ```json
 {
-  "id": "link:kansanshi:core-02:gi0-2:dist-02:gi1-0-24",
+  "id": "link:mukuba-copper-complex:core-02:gi0-2:dist-02:gi1-0-24",
   "kind": "physical_confirmed",
-  "source_tp": "tp:kansanshi:core-02:gi0-2",
-  "target_tp": "tp:kansanshi:dist-02:gi1-0-24",
+  "source_tp": "interface:mukuba-copper-complex:core-02:gi0-2",
+  "target_tp": "interface:mukuba-copper-complex:dist-02:gi1-0-24",
   "direction": "bidirectional",
   "supporting_links": [],
   "capacity_bps": 1000000000,

@@ -61,6 +61,8 @@ export const generateMockTopology = () => {
 
 // ─── Active Incident ──────────────────────────────────────────────────────────
 
+// Legacy, unvalidated incident-demo content. Atlas must consume data only through
+// the validated topology repository in features/topology/data.
 export const ACTIVE_INCIDENT = {
   id:          'INC-2026-0847',
   severity:    'critical' as const,
@@ -85,7 +87,7 @@ export const ACTIVE_INCIDENT = {
   timeline: [
     { time: '20:32', event: 'System detected anomaly on Dist-02 (Plant)' },
     { time: '20:32', event: 'SMS alert sent to Mutale (+260 97 xxx xxxx)' },
-    { time: '20:32', event: 'Email alert dispatched to team@kansanshi.zm' },
+    { time: '20:32', event: 'Email alert dispatched to team@mukuba.example' },
   ],
 };
 

@@ -168,8 +168,8 @@ export function Shell() {
         >
           <NavSection label="Monitoring" collapsed={collapsed} />
           <NavItem to="/dashboard" icon={<LayoutGrid  className="w-4 h-4" />} label="Dashboard"      collapsed={collapsed} />
-          <NavItem to="/alerts"    icon={<Bell         className="w-4 h-4" />} label="Alert Feed"    badge={3} collapsed={collapsed} />
-          <NavItem to="/incidents" icon={<AlertTriangle className="w-4 h-4" />} label="Incidents"    badge={1} collapsed={collapsed} />
+          <NavItem to="/alerts"    icon={<Bell         className="w-4 h-4" />} label="Alert Feed"    collapsed={collapsed} />
+          <NavItem to="/incidents" icon={<AlertTriangle className="w-4 h-4" />} label="Incidents"    collapsed={collapsed} />
           <NavItem to="/replay"    icon={<Terminal     className="w-4 h-4" />} label="Forensic Replay" collapsed={collapsed} />
 
           <NavSection label="Infrastructure" collapsed={collapsed} />
@@ -196,7 +196,7 @@ export function Shell() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-status-ok)]" />
               </div>
               <span className="text-[11px] font-mono text-[var(--color-text-muted)] truncate flex-1">
-                Probe · Kansanshi · <span className="text-[var(--color-status-ok)] font-semibold">14ms</span>
+                Synthetic probe · <span className="text-[var(--color-status-ok)] font-semibold">current</span>
               </span>
               <Wifi className="w-3 h-3 text-[var(--color-text-disabled)] flex-shrink-0" />
             </div>
@@ -274,10 +274,10 @@ export function Shell() {
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-[15px] font-extrabold text-white tracking-tight leading-none mb-1">
-                Kansanshi Copper Mine
+                Mukuba Copper Processing Complex
               </h1>
               <div className="text-[10.5px] font-medium text-[var(--color-text-muted)] tracking-wide">
-                Primary Site · OT + IT Converged Network
+                Synthetic site · Mukuba Industrial Systems
               </div>
             </div>
 
@@ -289,25 +289,24 @@ export function Shell() {
                 border:     '1px solid rgba(16,185,129,0.22)',
               }}
             >
-              ● LIVE PROBE
+              ● SYNTHETIC CURRENT
             </span>
           </div>
 
           {/* Right — status indicators */}
           <div className="flex items-center gap-2.5">
-            {/* Critical incident pill */}
+            {/* Healthy synthetic scenario status */}
             <div
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11.5px] font-bold text-[var(--color-status-crit)] animate-pulse"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11.5px] font-bold text-[var(--color-status-ok)]"
               style={{
-                background: 'rgba(239,68,68,0.07)',
-                border:     '1px solid rgba(239,68,68,0.2)',
+                background: 'rgba(16,185,129,0.07)',
+                border:     '1px solid rgba(16,185,129,0.2)',
               }}
             >
               <span
-                className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-crit)] flex-shrink-0"
-                style={{ boxShadow: '0 0 6px #EF4444' }}
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-ok)] flex-shrink-0"
               />
-              <span>1 Critical</span>
+              <span>No active incidents</span>
             </div>
 
             {/* Divider */}
@@ -320,10 +319,6 @@ export function Shell() {
               style={{ border: '1px solid var(--color-border-subtle)' }}
             >
               <Bell className="w-[15px] h-[15px]" />
-              <span
-                className="absolute top-1.5 right-1.5 w-[7px] h-[7px] rounded-full bg-[var(--color-status-crit)] animate-ping"
-                style={{ boxShadow: '0 0 5px #EF4444' }}
-              />
             </button>
 
             {/* Shield/security */}

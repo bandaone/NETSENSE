@@ -9,7 +9,7 @@
 ## Persona 1: Mutale - Junior OT Engineer
 
 ### Background
-Mutale is 24 years old. She graduated two years ago with a diploma in electrical engineering from Northern Technical College. She works at a copper mine in North-Western Province, maintaining the process control network that connects PLCs, HMIs, and SCADA servers across the concentrator plant. She is the only person on her shift responsible for the control network. Her senior, Bwalya, is on day shift. Mutale works nights and weekends alone.
+Mutale is 24 years old. She graduated two years ago with a diploma in electrical engineering from Northern Technical College. In this synthetic scenario she works at Mukuba Copper Processing Complex, maintaining the process control network that connects PLCs, HMIs, and SCADA servers across the plant. She is the only person on her shift responsible for the control network. Her senior, Bwalya, is on day shift. Mutale works nights and weekends alone.
 
 ### Technical Context
 - Manages approximately 80 devices: 40 PLCs (Siemens S7-1200/1500, Allen-Bradley ControlLogix), 10 HMIs, 5 SCADA servers, 15 managed switches (Cisco IE-2000), 10 engineering workstations

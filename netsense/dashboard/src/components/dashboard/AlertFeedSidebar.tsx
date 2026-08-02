@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { Check, ArrowRight, Bell } from 'lucide-react';
+import { Check, ArrowRight, Bell, CheckCircle2 } from 'lucide-react';
 import { StatusDot } from '../primitives/StatusDot';
-import { MOCK_ALERTS } from '../../lib/mockData';
 import { cn } from '../../lib/utils';
 
-export function AlertFeedSidebar() {
+export interface AlertFeedItem {
+  id: string;
+  severity: 'critical' | 'warning' | 'info';
+  text: string;
+  device: string;
+  ip: string;
+  time: string;
+  acked: boolean;
+}
+
+export function AlertFeedSidebar({ alerts = [] }: { alerts?: AlertFeedItem[] }) {
+  const newCount = alerts.filter(alert => !alert.acked).length;
   return (
     <div
       className="w-[310px] h-full flex flex-col overflow-hidden"
@@ -23,15 +33,8 @@ export function AlertFeedSidebar() {
           <Bell className="w-3.5 h-3.5 text-[var(--color-brand-primary)]" />
           <h2 className="text-[12px] font-bold text-white uppercase tracking-[0.14em]">Alert Feed</h2>
         </div>
-        <span
-          className="text-[9px] font-extrabold px-2 py-0.5 rounded-full animate-pulse"
-          style={{
-            background: 'rgba(239,68,68,0.12)',
-            border:     '1px solid rgba(239,68,68,0.2)',
-            color:      'var(--color-status-crit)',
-          }}
-        >
-          3 NEW
+        <span className="rounded-full border border-[var(--color-border-default)] px-2 py-0.5 text-[9px] font-extrabold text-[var(--color-text-muted)]">
+          {newCount} NEW
         </span>
       </div>
 
@@ -40,12 +43,22 @@ export function AlertFeedSidebar() {
         className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5"
         style={{ scrollbarWidth: 'none' }}
       >
-        {MOCK_ALERTS.map(alert => (
+        {alerts.map(alert => (
           <AlertCard key={alert.id} alert={alert} />
         ))}
 
+        {alerts.length === 0 && (
+          <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-6 text-center">
+            <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+            <h3 className="mt-3 text-sm font-bold text-white">No active alerts</h3>
+            <p className="mt-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+              The validated synthetic scenario is healthy. Alerts will appear here when supported observations require attention.
+            </p>
+          </div>
+        )}
+
         {/* Load more */}
-        <div className="pt-1">
+        {alerts.length > 0 && <div className="pt-1">
           <button
             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold text-[var(--color-brand-primary)] hover:text-white transition-all duration-150"
             style={{
@@ -55,7 +68,7 @@ export function AlertFeedSidebar() {
           >
             Explore All Alerts <ArrowRight className="w-3.5 h-3.5" />
           </button>
-        </div>
+        </div>}
       </div>
     </div>
   );
@@ -63,7 +76,7 @@ export function AlertFeedSidebar() {
 
 // ── AlertCard ──────────────────────────────────────────────────────────────────
 
-function AlertCard({ alert }: { alert: any }) {
+function AlertCard({ alert }: { alert: AlertFeedItem }) {
   const [acked, setAcked] = useState(alert.acked);
   const isCrit    = alert.severity === 'critical';
   const isWarning = alert.severity === 'warning';
@@ -100,7 +113,10 @@ function AlertCard({ alert }: { alert: any }) {
       )}
 
       <div className="flex gap-2.5 items-start">
-        <StatusDot status={alert.severity} className="mt-0.5 flex-shrink-0" />
+        <StatusDot
+          status={alert.severity === 'info' ? 'learning' : alert.severity}
+          className="mt-0.5 flex-shrink-0"
+        />
 
         <div className="flex-1 min-w-0">
           {/* Top row */}

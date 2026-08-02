@@ -11,7 +11,7 @@ This document describes concrete situations that NetSense users will encounter. 
 ## Scenario 1: The 2 AM Switch Failure
 
 **Who:** Mutale (junior OT engineer, night shift)
-**Where:** Copper mine concentrator plant, North-Western Province
+**Where:** Mukuba Copper Processing Complex, an explicitly fictional industrial site
 **When:** 02:17 on a Tuesday
 
 ### Situation
