@@ -1,0 +1,18 @@
+import { createContext, useContext } from 'react';
+import type { TopologySnapshot } from '../domain/types';
+import type { LayoutProfile } from '../layout/types';
+
+export interface TopologyDataState {
+  snapshot: TopologySnapshot | undefined;
+  layout: LayoutProfile | undefined;
+  error: string | undefined;
+  isLoading: boolean;
+}
+
+export const TopologyDataContext = createContext<TopologyDataState | undefined>(undefined);
+
+export function useTopologyData(): TopologyDataState {
+  const value = useContext(TopologyDataContext);
+  if (!value) throw new Error('useTopologyData must be used inside TopologyDataProvider.');
+  return value;
+}

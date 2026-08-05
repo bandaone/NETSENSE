@@ -44,4 +44,28 @@ describe('projectSnapshotToCytoscape', () => {
     expect(physicalEdge?.data.source).toBe('device:mukuba-copper-complex:edge-firewall');
     expect(physicalEdge?.data.target).toBe('device:mukuba-copper-complex:core-01');
   });
+
+  it('keeps relationship type separate from its evidence basis', () => {
+    const snapshot = structuredClone(healthyMukubaSnapshotFixture);
+    snapshot.relationships[0].knowledgeKind = 'configured';
+    const elements = projectSnapshotToCytoscape(snapshot, healthyMukubaOperationsLayout);
+    const relationship = elements.find(element => element.data.id === snapshot.relationships[0].id);
+
+    expect(relationship?.data.relationshipLabel).toBe('Physical adjacency');
+    expect(relationship?.data.knowledgeLabel).toBe('Configured');
+    expect(relationship?.data.lineStyle).toBe('dashed');
+  });
+
+  it('provides semantic-zoom labels without hard-coding sector roles into shapes', () => {
+    const elements = projectSnapshotToCytoscape(
+      healthyMukubaSnapshotFixture,
+      healthyMukubaOperationsLayout,
+    );
+    const plc = elements.find(element => element.data.id === 'device:mukuba-copper-complex:crusher-plc-01');
+
+    expect(plc?.data.shape).toBe('ellipse');
+    expect(plc?.data.labelMedium).toContain('Crusher PLC 01');
+    expect(plc?.data.labelHigh).toContain('10.77.40.101');
+    expect(plc?.data.labelMedium).toContain('◐');
+  });
 });

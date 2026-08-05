@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import cytoscape, { type Core, type ElementDefinition, type StylesheetStyle } from 'cytoscape';
-import { Lock, Maximize2, Unlock } from 'lucide-react';
+import { Lock, Maximize2, Minus, Plus } from 'lucide-react';
 import {
   isAtlasNodeData,
   type AtlasCytoscapeNodeData,
@@ -9,6 +9,7 @@ import { cn } from '../../lib/utils';
 
 export interface TopologyMapProps {
   elements: ElementDefinition[];
+  selectedNodeId?: string;
   onNodeClick?: (node: AtlasCytoscapeNodeData) => void;
   className?: string;
 }
@@ -24,61 +25,83 @@ const ATLAS_STYLE_DEFINITIONS = [
     selector: 'node.atlas-entity',
     style: {
       label: 'data(label)',
-      color: '#CBD5E1',
-      'font-family': 'Inter, sans-serif',
-      'font-size': 10,
-      'font-weight': 600,
+      color: '#cbd3dc',
+      'font-family': 'Inter, ui-sans-serif, sans-serif',
+      'font-size': 11,
+      'font-weight': 500,
       'text-wrap': 'wrap',
-      'text-max-width': 120,
+      'text-max-width': 112,
       'text-valign': 'bottom',
       'text-halign': 'center',
       'text-margin-y': 8,
-      'text-background-color': '#070B14',
-      'text-background-opacity': 0.88,
-      'text-background-padding': 4,
-      'text-background-shape': 'roundrectangle',
+      'text-background-color': '#0c1117',
+      'text-background-opacity': 0.94,
+      'text-background-padding': 3,
+      'text-background-shape': 'rectangle',
       width: 'data(size)',
       height: 'data(size)',
       shape: 'data(shape)',
-      'background-color': '#111827',
-      'border-width': 3,
-      'border-color': 'data(statusColor)',
-      'shadow-blur': 8,
-      'shadow-color': 'data(statusColor)',
-      'shadow-opacity': 0.25,
-      'shadow-offset-x': 0,
-      'shadow-offset-y': 0,
+      'background-color': '#18212b',
+      'border-width': 1.5,
+      'border-color': '#5a6672',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[operationalHealth = "degraded"]',
+    style: {
+      'border-width': 2.5,
+      'border-color': '#d0a05b',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[operationalHealth = "unreachable"]',
+    style: {
+      'border-width': 2.5,
+      'border-color': '#d56a6a',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[operationalHealth = "unknown"]',
+    style: {
+      'border-color': '#8b96a3',
+      'border-style': 'dashed',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[coverage = "partial"]',
+    style: {
+      'background-color': '#1a222c',
+      'background-opacity': 0.72,
     },
   },
   {
     selector: 'node.atlas-zone',
     style: {
       label: 'data(label)',
-      color: '#94A3B8',
-      'font-family': 'Inter, sans-serif',
-      'font-size': 11,
-      'font-weight': 700,
-      'text-transform': 'uppercase',
+      color: '#9ba6b2',
+      'font-family': 'Inter, ui-sans-serif, sans-serif',
+      'font-size': 12,
+      'font-weight': 600,
       'text-valign': 'top',
       'text-halign': 'center',
-      'text-margin-y': 10,
-      'background-color': '#0B1220',
-      'background-opacity': 0.42,
+      'text-margin-y': 9,
+      'background-color': '#111820',
+      'background-opacity': 0.28,
       'border-width': 1,
-      'border-color': '#273449',
+      'border-color': '#34404c',
       'border-style': 'solid',
-      padding: 28,
+      padding: 24,
       shape: 'round-rectangle',
     },
   },
   {
     selector: 'node:selected',
     style: {
-      'overlay-color': '#38BDF8',
-      'overlay-opacity': 0.12,
-      'overlay-padding': 8,
-      'border-width': 4,
-      'border-color': '#38BDF8',
+      'overlay-color': '#59afc2',
+      'overlay-opacity': 0.1,
+      'overlay-padding': 7,
+      'border-width': 2.5,
+      'border-color': '#59afc2',
     },
   },
   {
@@ -90,33 +113,49 @@ const ATLAS_STYLE_DEFINITIONS = [
       'curve-style': 'bezier',
       'target-arrow-shape': 'data(targetArrowShape)',
       'target-arrow-color': 'data(lineColor)',
-      'arrow-scale': 0.75,
-      opacity: 0.78,
+      'arrow-scale': 0.68,
+      opacity: 'data(opacity)',
     },
   },
   {
     selector: 'edge:selected',
     style: {
-      'line-color': '#38BDF8',
-      'target-arrow-color': '#38BDF8',
+      'line-color': '#59afc2',
+      'target-arrow-color': '#59afc2',
       opacity: 1,
-      'overlay-color': '#38BDF8',
-      'overlay-opacity': 0.08,
+      'overlay-color': '#59afc2',
+      'overlay-opacity': 0.07,
       'overlay-padding': 4,
     },
   },
 ] as const;
 
-// Cytoscape accepts data(...) mappers for these properties at runtime, while its
-// public TypeScript declarations model several of them as literal values only.
+// Cytoscape supports data(...) mappings that are narrower than its public
+// TypeScript declarations for some style properties.
 const ATLAS_STYLES = ATLAS_STYLE_DEFINITIONS as unknown as StylesheetStyle[];
 
-export function TopologyMap({ elements, onNodeClick, className }: TopologyMapProps) {
+function updateSemanticLabels(cy: Core): void {
+  const zoom = cy.zoom();
+  const field = zoom < 0.66 ? 'labelLow' : zoom < 1.18 ? 'labelMedium' : 'labelHigh';
+  cy.batch(() => {
+    cy.nodes().forEach(node => {
+      const data: unknown = node.data();
+      if (!isAtlasNodeData(data)) return;
+      node.data('label', data[field]);
+    });
+  });
+}
+
+export function TopologyMap({
+  elements,
+  selectedNodeId,
+  onNodeClick,
+  className,
+}: TopologyMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core>();
   const initialElementsRef = useRef(elements);
   const fittedRef = useRef(false);
-  const [isEditingLayout, setIsEditingLayout] = useState(false);
   const [tooltip, setTooltip] = useState<NodeTooltip>();
 
   useEffect(() => {
@@ -126,15 +165,16 @@ export function TopologyMap({ elements, onNodeClick, className }: TopologyMapPro
       container: containerRef.current,
       elements: initialElementsRef.current,
       style: ATLAS_STYLES,
-      layout: { name: 'preset', fit: true, padding: 72 },
+      layout: { name: 'preset', fit: true, padding: 54 },
       wheelSensitivity: 0.12,
-      minZoom: 0.2,
+      minZoom: 0.25,
       maxZoom: 3,
       boxSelectionEnabled: false,
+      autolock: true,
     });
     cyRef.current = cy;
     fittedRef.current = cy.nodes().length > 0;
-    cy.autolock(true);
+    updateSemanticLabels(cy);
 
     cy.on('tap', 'node.atlas-entity', event => {
       const data: unknown = event.target.data();
@@ -147,9 +187,26 @@ export function TopologyMap({ elements, onNodeClick, className }: TopologyMapPro
       setTooltip({ x: position.x, y: position.y, data });
     });
     cy.on('mouseout', 'node.atlas-entity', () => setTooltip(undefined));
-    cy.on('pan zoom', () => setTooltip(undefined));
+    cy.on('pan', () => setTooltip(undefined));
+    cy.on('zoom', () => {
+      setTooltip(undefined);
+      updateSemanticLabels(cy);
+    });
+
+    let resizeFrame = 0;
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        cy.resize();
+        cy.fit(cy.elements(), 54);
+        updateSemanticLabels(cy);
+      });
+    });
+    resizeObserver.observe(containerRef.current);
 
     return () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeObserver.disconnect();
       cy.destroy();
       cyRef.current = undefined;
     };
@@ -178,109 +235,105 @@ export function TopologyMap({ elements, onNodeClick, className }: TopologyMapPro
       }
     });
 
-    cy.autolock(!isEditingLayout);
     if (!fittedRef.current && cy.nodes().length > 0) {
       fittedRef.current = true;
       requestAnimationFrame(() => {
         cy.resize();
-        cy.fit(cy.elements(), 72);
+        cy.fit(cy.elements(), 54);
+        updateSemanticLabels(cy);
       });
+    } else {
+      updateSemanticLabels(cy);
     }
-  }, [elements, isEditingLayout]);
+  }, [elements]);
+
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.nodes().unselect();
+    if (selectedNodeId) cy.getElementById(selectedNodeId).select();
+  }, [selectedNodeId]);
 
   const fitView = useCallback(() => {
     const cy = cyRef.current;
     if (!cy) return;
     cy.resize();
-    cy.fit(cy.elements(), 72);
-  }, []);
-  const zoomIn = useCallback(() => {
-    const cy = cyRef.current;
-    if (!cy) return;
-    cy.zoom({
-      level: cy.zoom() * 1.2,
-      renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-    });
-  }, []);
-  const zoomOut = useCallback(() => {
-    const cy = cyRef.current;
-    if (!cy) return;
-    cy.zoom({
-      level: cy.zoom() * 0.8,
-      renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-    });
+    cy.fit(cy.elements(), 54);
+    updateSemanticLabels(cy);
   }, []);
 
-  const toggleLayoutEditing = () => {
-    setIsEditingLayout(current => {
-      const next = !current;
-      const cy = cyRef.current;
-      if (cy) {
-        if (next) cy.nodes('.atlas-entity').unlock();
-        else cy.nodes().lock();
-      }
-      return next;
+  const zoomBy = useCallback((factor: number) => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.zoom({
+      level: cy.zoom() * factor,
+      renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
     });
-  };
+  }, []);
 
   return (
     <div
-      className={cn('relative h-full w-full overflow-hidden bg-[#050810]', className)}
-      aria-label="Operational topology map"
+      className={cn('relative h-full w-full overflow-hidden bg-[var(--color-bg-canvas)]', className)}
+      role="region"
+      aria-label="Operational topology map. Use the topology table view for keyboard navigation and a structured text representation."
     >
-      <div ref={containerRef} className="absolute inset-0" />
+      <div ref={containerRef} className="absolute inset-0" aria-hidden="true" />
 
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-30 min-w-[230px] rounded-lg border border-[var(--color-border-default)] bg-[#0A101D]/95 p-3 shadow-2xl"
+          className="pointer-events-none absolute z-30 min-w-[230px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-3 shadow-[var(--shadow-floating)]"
           style={{ left: tooltip.x + 16, top: tooltip.y, transform: 'translateY(-50%)' }}
         >
           <div className="flex items-center justify-between gap-4">
-            <span className="text-[13px] font-bold text-white">{tooltip.data.displayName}</span>
-            <span className="text-[10px] font-bold uppercase" style={{ color: tooltip.data.statusColor }}>
+            <span className="text-[13px] font-semibold text-white">{tooltip.data.displayName}</span>
+            <span className="text-[12px]" style={{ color: tooltip.data.statusColor }}>
+              <span aria-hidden="true">{tooltip.data.statusMarker}</span>{' '}
               {tooltip.data.operationalHealth}
             </span>
           </div>
-          <div className="mt-2 space-y-1 text-[10.5px] text-[var(--color-text-secondary)]">
-            <div className="font-mono text-[var(--color-brand-primary)]">{tooltip.data.primaryAddress}</div>
-            <div>{tooltip.data.role.replace(/_/g, ' ')}</div>
-            <div>
-              {tooltip.data.freshness} evidence · {tooltip.data.coverage} coverage ·{' '}
-              {Math.round(tooltip.data.confidence * 100)}% confidence
-            </div>
+          <div className="mt-2 space-y-1 text-[12px] text-[var(--color-text-secondary)]">
+            <div>{tooltip.data.roleLabel}</div>
+            <div className="font-mono text-[11px] text-[var(--color-text-muted)]">{tooltip.data.primaryAddress}</div>
+            <div>{tooltip.data.freshness} evidence · {tooltip.data.coverage} coverage</div>
             <div>{tooltip.data.managementState.replace(/_/g, ' ')}</div>
           </div>
         </div>
       )}
 
-      <div className="absolute bottom-5 left-5 z-20 flex items-center gap-2">
-        <div className="flex overflow-hidden rounded-lg border border-[var(--color-border-default)] bg-[#0A101D]/90">
-          <button onClick={zoomIn} title="Zoom in" className="h-9 w-9 text-lg text-slate-400 hover:bg-white/5 hover:text-white">+</button>
-          <button onClick={zoomOut} title="Zoom out" className="h-9 w-9 border-l border-[var(--color-border-subtle)] text-lg text-slate-400 hover:bg-white/5 hover:text-white">−</button>
+      <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+        <div className="flex border border-[var(--color-border-default)] bg-[var(--color-bg-surface)]">
+          <button
+            type="button"
+            onClick={() => zoomBy(1.2)}
+            aria-label="Zoom in"
+            title="Zoom in"
+            className="flex h-8 w-8 items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => zoomBy(0.8)}
+            aria-label="Zoom out"
+            title="Zoom out"
+            className="flex h-8 w-8 items-center justify-center border-l border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+          >
+            <Minus className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
-        <button onClick={fitView} title="Fit topology" className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border-default)] bg-[#0A101D]/90 text-slate-400 hover:text-white">
-          <Maximize2 className="h-4 w-4" />
-        </button>
         <button
-          onClick={toggleLayoutEditing}
-          aria-pressed={isEditingLayout}
-          title={isEditingLayout ? 'Finish layout editing' : 'Edit layout'}
-          className={cn(
-            'flex h-9 items-center gap-2 rounded-lg border px-3 text-[10.5px] font-bold',
-            isEditingLayout
-              ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300'
-              : 'border-[var(--color-border-default)] bg-[#0A101D]/90 text-slate-400',
-          )}
+          type="button"
+          onClick={fitView}
+          aria-label="Fit topology to view"
+          title="Fit topology to view"
+          className="flex h-8 w-8 items-center justify-center border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
         >
-          {isEditingLayout ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-          {isEditingLayout ? 'Editing layout' : 'Layout locked'}
+          <Maximize2 className="h-4 w-4" aria-hidden="true" />
         </button>
-      </div>
-
-      <div className="absolute bottom-5 right-5 z-20 flex items-center gap-4 rounded-lg border border-[var(--color-border-default)] bg-[#0A101D]/90 px-4 py-2 text-[10px] font-semibold text-slate-400">
-        <span className="flex items-center gap-1.5"><span className="text-emerald-400">✓</span> Healthy</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-slate-500" /> Physical</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-dashed border-cyan-500" /> Redundancy</span>
+        <div className="flex h-8 items-center gap-2 border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-2.5 text-[11px] text-[var(--color-text-muted)]">
+          <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+          Canonical layout
+        </div>
       </div>
     </div>
   );
