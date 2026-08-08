@@ -1,10 +1,8 @@
 import { createContext, useContext } from 'react';
 import type { TopologySnapshot } from '../domain/types';
-import type { LayoutProfile } from '../layout/types';
 
 export interface TopologyDataState {
   snapshot: TopologySnapshot | undefined;
-  layout: LayoutProfile | undefined;
   error: string | undefined;
   isLoading: boolean;
 }

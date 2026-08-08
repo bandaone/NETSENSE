@@ -1,13 +1,10 @@
 import {
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import type { TopologySnapshot } from '../domain/types';
-import type { LayoutProfile } from '../layout/types';
 import {
-  defaultPositionStore,
   defaultTopologyRepository,
   defaultTopologyRequest,
 } from '../data/defaultTopologyRepository';
@@ -33,31 +30,21 @@ export function TopologyDataProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const layout = useMemo(() => {
-    if (!snapshot) return undefined;
-    return defaultPositionStore.get({
-      siteId: snapshot.site.id,
-      scopeId: snapshot.site.id,
-      lens: 'operations',
-    });
-  }, [snapshot]);
-
-  const value = useMemo<TopologyDataState>(() => ({
+  const value: TopologyDataState = {
     snapshot,
-    layout,
     error,
     isLoading: !snapshot && !error,
-  }), [error, layout, snapshot]);
+  };
 
   return <TopologyDataContext.Provider value={value}>{children}</TopologyDataContext.Provider>;
 }
 
 interface TopologyDataBoundaryProps {
-  children: (snapshot: TopologySnapshot, layout: LayoutProfile | undefined) => ReactNode;
+  children: (snapshot: TopologySnapshot) => ReactNode;
 }
 
 export function TopologyDataBoundary({ children }: TopologyDataBoundaryProps) {
-  const { snapshot, layout, error } = useTopologyData();
+  const { snapshot, error } = useTopologyData();
 
   if (error) {
     return (
@@ -81,5 +68,5 @@ export function TopologyDataBoundary({ children }: TopologyDataBoundaryProps) {
     );
   }
 
-  return <>{children(snapshot, layout)}</>;
+  return <>{children(snapshot)}</>;
 }

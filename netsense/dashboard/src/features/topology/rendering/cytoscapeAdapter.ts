@@ -1,5 +1,6 @@
 import type { ElementDefinition } from 'cytoscape';
 import type { TopologyNode, TopologyRelationship, TopologySnapshot } from '../domain/types';
+import { atlasNodeDimensions } from '../layout/atlasLayout';
 import type { LayoutProfile } from '../layout/types';
 import { KNOWLEDGE_GRAMMAR, RELATIONSHIP_GRAMMAR } from './visualGrammar';
 
@@ -51,7 +52,9 @@ export interface AtlasCytoscapeNodeData {
   statusColor: string;
   statusMarker: string;
   shape: string;
-  size: number;
+  width: number;
+  height: number;
+  entityGlyph: string;
   parent?: string;
 }
 
@@ -69,28 +72,47 @@ export interface AtlasCytoscapeEdgeData {
   width: number;
   opacity: number;
   targetArrowShape: 'none' | 'triangle';
+  sourceInterface: string;
+  targetInterface: string;
+  label: string;
+  labelHigh: string;
 }
 
 function nodeShape(node: TopologyNode): string {
   switch (node.kind) {
+    case 'site':
+    case 'location':
     case 'zone': return 'round-rectangle';
-    case 'service': return 'round-rectangle';
-    case 'process': return 'hexagon';
+    case 'service':
+    case 'application':
+    case 'workload': return 'round-rectangle';
+    case 'process':
+    case 'capability': return 'hexagon';
     case 'subnet': return 'diamond';
     case 'vlan': return 'round-diamond';
-    case 'site': return 'round-rectangle';
+    case 'user_group': return 'ellipse';
+    case 'aggregate': return 'barrel';
     case 'unknown': return 'octagon';
-    case 'device': return 'ellipse';
+    case 'device': return 'round-rectangle';
   }
 }
 
-function nodeSize(node: TopologyNode): number {
+function nodeGlyph(node: TopologyNode): string {
   switch (node.kind) {
-    case 'zone': return 1;
-    case 'process': return 48;
-    case 'service': return 40;
-    case 'site': return 52;
-    default: return 38;
+    case 'site': return '⌂';
+    case 'location': return '⌖';
+    case 'zone': return '▱';
+    case 'subnet': return '◇';
+    case 'vlan': return '≋';
+    case 'device': return '▣';
+    case 'service': return '◆';
+    case 'application': return '▤';
+    case 'workload': return '□';
+    case 'process': return '⬡';
+    case 'capability': return '◈';
+    case 'user_group': return '●';
+    case 'aggregate': return '⋯';
+    case 'unknown': return '?';
   }
 }
 
@@ -109,6 +131,9 @@ export function projectSnapshotToCytoscape(
   const interfaceToDevice = new Map(
     snapshot.interfaces.map(networkInterface => [networkInterface.id, networkInterface.deviceId]),
   );
+  const interfacesById = new Map(
+    snapshot.interfaces.map(networkInterface => [networkInterface.id, networkInterface]),
+  );
 
   const resolveEndpoint = (endpoint: TopologyRelationship['source']): string | undefined =>
     endpoint.nodeId ?? (endpoint.interfaceId ? interfaceToDevice.get(endpoint.interfaceId) : undefined);
@@ -117,13 +142,16 @@ export function projectSnapshotToCytoscape(
     const prefix = statusPrefix(node);
     const primaryAddress = node.identifiers.ipAddresses[0] ?? 'Address not observed';
     const roleLabel = node.role.replace(/_/g, ' ');
-    const mediumLabel = node.kind === 'zone' ? node.displayName : `${prefix} ${node.displayName}`;
-    const highLabel = node.kind === 'zone'
+    const isGroup = node.kind === 'site' || node.kind === 'location' || node.kind === 'zone';
+    const glyph = nodeGlyph(node);
+    const dimensions = atlasNodeDimensions(node);
+    const mediumLabel = isGroup ? node.displayName : `${prefix}  ${glyph} ${node.displayName}`;
+    const highLabel = isGroup
       ? node.displayName
       : `${mediumLabel}\n${roleLabel} · ${primaryAddress}`;
-    const lowLabel = node.kind === 'zone' || node.operationalCriticality === 5
+    const lowLabel = isGroup || node.operationalCriticality >= 4
       ? node.displayName
-      : '';
+      : glyph;
     const data: AtlasCytoscapeNodeData = {
       id: node.id,
       label: mediumLabel,
@@ -144,14 +172,16 @@ export function projectSnapshotToCytoscape(
       statusColor: STATUS_COLOR[node.assessment.operationalHealth],
       statusMarker: STATUS_MARKER[node.assessment.operationalHealth],
       shape: nodeShape(node),
-      size: nodeSize(node),
+      width: dimensions.width,
+      height: dimensions.height,
+      entityGlyph: glyph,
       ...(node.parentId ? { parent: node.parentId } : {}),
     };
     return {
       group: 'nodes',
       data,
       ...(layout?.positions[node.id] ? { position: layout.positions[node.id] } : {}),
-      classes: node.kind === 'zone' ? 'atlas-zone' : 'atlas-entity',
+      classes: isGroup ? 'atlas-group' : 'atlas-entity',
     };
   });
 
@@ -182,6 +212,16 @@ export function projectSnapshotToCytoscape(
       width: relationshipGrammar.width,
       opacity: knowledgeGrammar.opacity,
       targetArrowShape: relationshipGrammar.targetArrowShape,
+      sourceInterface: relationship.source.interfaceId
+        ? interfacesById.get(relationship.source.interfaceId)?.name ?? 'Unknown interface'
+        : 'Entity relationship',
+      targetInterface: relationship.target.interfaceId
+        ? interfacesById.get(relationship.target.interfaceId)?.name ?? 'Unknown interface'
+        : 'Entity relationship',
+      label: '',
+      labelHigh: relationship.relationshipType === 'physical_adjacency'
+        ? ''
+        : `${knowledgeGrammar.marker} ${relationshipGrammar.label}`,
     };
     return [{ group: 'edges' as const, data }];
   });

@@ -7,7 +7,8 @@ export type TopologyLens =
   | 'layer3'
   | 'dependency'
   | 'flow'
-  | 'incident';
+  | 'incident'
+  | 'change';
 
 export type StoredPositionProvenance =
   | 'system_suggested'
@@ -29,6 +30,8 @@ export interface LayoutProfile {
   provenance: StoredPositionProvenance;
   ownerUserId?: string;
   algorithm: string;
+  computationMs?: number;
+  warnings?: string[];
   createdAt: string;
   updatedAt: string;
   positions: Record<string, NodePosition>;

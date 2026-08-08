@@ -63,9 +63,10 @@ describe('projectSnapshotToCytoscape', () => {
     );
     const plc = elements.find(element => element.data.id === 'device:mukuba-copper-complex:crusher-plc-01');
 
-    expect(plc?.data.shape).toBe('ellipse');
+    expect(plc?.data.shape).toBe('round-rectangle');
     expect(plc?.data.labelMedium).toContain('Crusher PLC 01');
     expect(plc?.data.labelHigh).toContain('10.77.40.101');
     expect(plc?.data.labelMedium).toContain('◐');
+    expect(plc?.data.width).toBeGreaterThan(plc?.data.height);
   });
 });

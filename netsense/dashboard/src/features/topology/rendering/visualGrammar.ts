@@ -59,6 +59,12 @@ export const RELATIONSHIP_GRAMMAR: Record<RelationshipType, RelationshipGrammar>
     width: 1.6,
     targetArrowShape: 'triangle',
   },
+  serves: {
+    label: 'Serves',
+    lineColor: '#7d8fa1',
+    width: 1.4,
+    targetArrowShape: 'triangle',
+  },
   observed_by: {
     label: 'Observed by',
     lineColor: '#658c88',

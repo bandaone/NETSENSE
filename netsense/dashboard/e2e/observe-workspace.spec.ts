@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function openObserve(page: Page) {
   await page.goto('/observe');
-  await expect(page.getByRole('heading', { name: 'Mukuba Copper Processing Complex' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Central Services Campus' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Current situation' })).toBeVisible();
 }
 
@@ -40,6 +40,22 @@ test('keyboard user can inspect an entity through the synchronized topology tabl
   await page.keyboard.press('Escape');
   await expect(inspector).toHaveCount(0);
   await expect(entity).toBeFocused();
+});
+
+test('working lenses project the same network into physical and dependency views', async ({ page }) => {
+  await openObserve(page);
+
+  await page.getByRole('button', { name: 'Physical' }).click();
+  await expect(page.getByText('Atlas layered topology')).toBeVisible();
+  await page.getByRole('button', { name: /Legend/ }).click();
+  await expect(page.getByText('Physical adjacency')).toBeVisible();
+  await expect(page.getByText('Depends on')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Dependency' }).click();
+  await expect(page.getByText('Atlas layered topology')).toBeVisible();
+  await page.getByRole('button', { name: /Legend/ }).click();
+  await expect(page.getByText('Depends on')).toBeVisible();
+  await expect(page.getByText('Physical adjacency')).toHaveCount(0);
 });
 
 for (const viewport of [

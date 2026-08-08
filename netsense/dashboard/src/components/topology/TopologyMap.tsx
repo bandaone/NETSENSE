@@ -11,6 +11,7 @@ export interface TopologyMapProps {
   elements: ElementDefinition[];
   selectedNodeId?: string;
   onNodeClick?: (node: AtlasCytoscapeNodeData) => void;
+  onBackgroundClick?: () => void;
   className?: string;
 }
 
@@ -27,23 +28,23 @@ const ATLAS_STYLE_DEFINITIONS = [
       label: 'data(label)',
       color: '#cbd3dc',
       'font-family': 'Inter, ui-sans-serif, sans-serif',
-      'font-size': 11,
+      'font-size': 10.5,
       'font-weight': 500,
       'text-wrap': 'wrap',
-      'text-max-width': 112,
-      'text-valign': 'bottom',
+      'text-max-width': 104,
+      'text-valign': 'center',
       'text-halign': 'center',
-      'text-margin-y': 8,
+      'text-margin-y': 0,
       'text-background-color': '#0c1117',
-      'text-background-opacity': 0.94,
-      'text-background-padding': 3,
+      'text-background-opacity': 0,
+      'text-background-padding': 0,
       'text-background-shape': 'rectangle',
-      width: 'data(size)',
-      height: 'data(size)',
+      width: 'data(width)',
+      height: 'data(height)',
       shape: 'data(shape)',
-      'background-color': '#18212b',
+      'background-color': '#151e27',
       'border-width': 1.5,
-      'border-color': '#5a6672',
+      'border-color': '#53616e',
     },
   },
   {
@@ -75,7 +76,21 @@ const ATLAS_STYLE_DEFINITIONS = [
     },
   },
   {
-    selector: 'node.atlas-zone',
+    selector: 'node.atlas-entity[kind = "application"], node.atlas-entity[kind = "service"], node.atlas-entity[kind = "workload"]',
+    style: {
+      'background-color': '#18232d',
+      'border-color': '#5c6b78',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[kind = "capability"], node.atlas-entity[kind = "process"]',
+    style: {
+      'background-color': '#1b252d',
+      'border-color': '#687783',
+    },
+  },
+  {
+    selector: 'node.atlas-group',
     style: {
       label: 'data(label)',
       color: '#9ba6b2',
@@ -85,13 +100,13 @@ const ATLAS_STYLE_DEFINITIONS = [
       'text-valign': 'top',
       'text-halign': 'center',
       'text-margin-y': 9,
-      'background-color': '#111820',
-      'background-opacity': 0.28,
+      'background-color': '#10171e',
+      'background-opacity': 0.42,
       'border-width': 1,
       'border-color': '#34404c',
       'border-style': 'solid',
-      padding: 24,
-      shape: 'round-rectangle',
+      padding: 32,
+      shape: 'rectangle',
     },
   },
   {
@@ -110,11 +125,30 @@ const ATLAS_STYLE_DEFINITIONS = [
       width: 'data(width)',
       'line-color': 'data(lineColor)',
       'line-style': 'data(lineStyle)',
-      'curve-style': 'bezier',
+      'curve-style': 'taxi',
+      'taxi-direction': 'rightward',
+      'taxi-turn': '50%',
+      'taxi-turn-min-distance': 18,
       'target-arrow-shape': 'data(targetArrowShape)',
       'target-arrow-color': 'data(lineColor)',
       'arrow-scale': 0.68,
       opacity: 'data(opacity)',
+      label: 'data(label)',
+      color: '#aab4be',
+      'font-family': 'Inter, ui-sans-serif, sans-serif',
+      'font-size': 9,
+      'text-background-color': '#0c1117',
+      'text-background-opacity': 0.94,
+      'text-background-padding': 3,
+      'text-rotation': 'autorotate',
+    },
+  },
+  {
+    selector: 'edge[relationshipType = "redundancy_peer"]',
+    style: {
+      'curve-style': 'unbundled-bezier',
+      'control-point-distance': 34,
+      'control-point-weight': 0.5,
     },
   },
   {
@@ -128,13 +162,28 @@ const ATLAS_STYLE_DEFINITIONS = [
       'overlay-padding': 4,
     },
   },
+  {
+    selector: '.atlas-muted',
+    style: {
+      opacity: 0.14,
+      'text-opacity': 0.08,
+    },
+  },
+  {
+    selector: 'edge.atlas-related',
+    style: {
+      opacity: 0.96,
+      'line-color': '#59afc2',
+      'target-arrow-color': '#59afc2',
+    },
+  },
 ] as const;
 
 // Cytoscape supports data(...) mappings that are narrower than its public
 // TypeScript declarations for some style properties.
 const ATLAS_STYLES = ATLAS_STYLE_DEFINITIONS as unknown as StylesheetStyle[];
 
-function updateSemanticLabels(cy: Core): void {
+function updateSemanticPresentation(cy: Core): void {
   const zoom = cy.zoom();
   const field = zoom < 0.66 ? 'labelLow' : zoom < 1.18 ? 'labelMedium' : 'labelHigh';
   cy.batch(() => {
@@ -143,6 +192,9 @@ function updateSemanticLabels(cy: Core): void {
       if (!isAtlasNodeData(data)) return;
       node.data('label', data[field]);
     });
+    cy.edges().forEach(edge => {
+      edge.data('label', zoom >= 1.34 ? edge.data('labelHigh') : '');
+    });
   });
 }
 
@@ -150,13 +202,21 @@ export function TopologyMap({
   elements,
   selectedNodeId,
   onNodeClick,
+  onBackgroundClick,
   className,
 }: TopologyMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core>();
   const initialElementsRef = useRef(elements);
   const fittedRef = useRef(false);
+  const onNodeClickRef = useRef(onNodeClick);
+  const onBackgroundClickRef = useRef(onBackgroundClick);
   const [tooltip, setTooltip] = useState<NodeTooltip>();
+
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+    onBackgroundClickRef.current = onBackgroundClick;
+  }, [onBackgroundClick, onNodeClick]);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
@@ -174,23 +234,28 @@ export function TopologyMap({
     });
     cyRef.current = cy;
     fittedRef.current = cy.nodes().length > 0;
-    updateSemanticLabels(cy);
+    updateSemanticPresentation(cy);
 
     cy.on('tap', 'node.atlas-entity', event => {
       const data: unknown = event.target.data();
-      if (isAtlasNodeData(data)) onNodeClick?.(data);
+      if (isAtlasNodeData(data)) onNodeClickRef.current?.(data);
+    });
+    cy.on('tap', event => {
+      if (event.target === cy) onBackgroundClickRef.current?.();
     });
     cy.on('mouseover', 'node.atlas-entity', event => {
       const data: unknown = event.target.data();
       if (!isAtlasNodeData(data)) return;
       const position = event.target.renderedPosition();
-      setTooltip({ x: position.x, y: position.y, data });
+      const x = position.x > cy.width() - 270 ? position.x - 246 : position.x + 16;
+      const y = Math.min(Math.max(position.y, 78), cy.height() - 78);
+      setTooltip({ x, y, data });
     });
     cy.on('mouseout', 'node.atlas-entity', () => setTooltip(undefined));
     cy.on('pan', () => setTooltip(undefined));
     cy.on('zoom', () => {
       setTooltip(undefined);
-      updateSemanticLabels(cy);
+      updateSemanticPresentation(cy);
     });
 
     let resizeFrame = 0;
@@ -199,7 +264,7 @@ export function TopologyMap({
       resizeFrame = requestAnimationFrame(() => {
         cy.resize();
         cy.fit(cy.elements(), 54);
-        updateSemanticLabels(cy);
+        updateSemanticPresentation(cy);
       });
     });
     resizeObserver.observe(containerRef.current);
@@ -210,7 +275,7 @@ export function TopologyMap({
       cy.destroy();
       cyRef.current = undefined;
     };
-  }, [onNodeClick]);
+  }, []);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -240,18 +305,25 @@ export function TopologyMap({
       requestAnimationFrame(() => {
         cy.resize();
         cy.fit(cy.elements(), 54);
-        updateSemanticLabels(cy);
+        updateSemanticPresentation(cy);
       });
     } else {
-      updateSemanticLabels(cy);
+      updateSemanticPresentation(cy);
     }
   }, [elements]);
 
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
+    cy.elements().removeClass('atlas-muted atlas-related');
     cy.nodes().unselect();
-    if (selectedNodeId) cy.getElementById(selectedNodeId).select();
+    if (selectedNodeId) {
+      const selected = cy.getElementById(selectedNodeId);
+      selected.select();
+      const context = selected.closedNeighborhood();
+      cy.elements().not(context).addClass('atlas-muted');
+      context.edges().addClass('atlas-related');
+    }
   }, [selectedNodeId]);
 
   const fitView = useCallback(() => {
@@ -259,7 +331,7 @@ export function TopologyMap({
     if (!cy) return;
     cy.resize();
     cy.fit(cy.elements(), 54);
-    updateSemanticLabels(cy);
+    updateSemanticPresentation(cy);
   }, []);
 
   const zoomBy = useCallback((factor: number) => {
@@ -282,7 +354,7 @@ export function TopologyMap({
       {tooltip && (
         <div
           className="pointer-events-none absolute z-30 min-w-[230px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-3 shadow-[var(--shadow-floating)]"
-          style={{ left: tooltip.x + 16, top: tooltip.y, transform: 'translateY(-50%)' }}
+          style={{ left: tooltip.x, top: tooltip.y, transform: 'translateY(-50%)' }}
         >
           <div className="flex items-center justify-between gap-4">
             <span className="text-[13px] font-semibold text-white">{tooltip.data.displayName}</span>
@@ -332,7 +404,7 @@ export function TopologyMap({
         </button>
         <div className="flex h-8 items-center gap-2 border border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] px-2.5 text-[11px] text-[var(--color-text-muted)]">
           <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-          Canonical layout
+          Atlas layout · locked
         </div>
       </div>
     </div>
