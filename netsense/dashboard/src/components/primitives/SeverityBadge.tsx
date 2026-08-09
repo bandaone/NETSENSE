@@ -12,18 +12,18 @@ interface SeverityBadgeProps {
 export function SeverityBadge({ severity, count, label, className }: SeverityBadgeProps) {
   const config = {
     critical: {
-      color: 'bg-[var(--color-status-crit-dim)] text-white border-[var(--color-status-crit)]',
-      icon: <AlertCircle className="w-3.5 h-3.5 text-white" />,
+      color: 'bg-[var(--color-status-crit-dim)] text-[var(--color-text-primary)] border-[var(--color-status-crit)]',
+      icon: <AlertCircle className="w-3.5 h-3.5 text-[var(--color-text-primary)]" />,
       text: 'CRITICAL',
     },
     warning: {
-      color: 'bg-[var(--color-status-warn-dim)] text-white border-[var(--color-status-warn)]',
+      color: 'bg-[var(--color-status-warn-dim)] text-[var(--color-text-primary)] border-[var(--color-status-warn)]',
       icon: <AlertTriangle className="w-3.5 h-3.5 text-[var(--color-status-warn)]" />,
       text: 'WARNING',
     },
     info: {
-      color: 'bg-[var(--color-brand-dim)] text-white border-[var(--color-brand-primary)]',
-      icon: <Info className="w-3.5 h-3.5 text-[var(--color-brand-primary)]" />,
+      color: 'bg-[var(--color-brand-dim)] text-[var(--color-text-inverse)] border-[var(--color-brand-primary)]',
+      icon: <Info className="w-3.5 h-3.5 text-[var(--color-text-inverse)]" />,
       text: 'INFO',
     },
     maintenance: {
@@ -32,8 +32,8 @@ export function SeverityBadge({ severity, count, label, className }: SeverityBad
       text: 'MAINTENANCE',
     },
     ok: {
-      color: 'bg-[var(--color-status-ok-dim)] text-white border-[var(--color-status-ok)]',
-      icon: <ShieldCheck className="w-3.5 h-3.5 text-white" />,
+      color: 'bg-[var(--color-status-ok-dim)] text-[var(--color-text-primary)] border-[var(--color-status-ok)]',
+      icon: <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-text-primary)]" />,
       text: 'HEALTHY',
     }
   };

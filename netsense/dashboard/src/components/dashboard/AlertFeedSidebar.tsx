@@ -31,7 +31,7 @@ export function AlertFeedSidebar({ alerts = [] }: { alerts?: AlertFeedItem[] }) 
       >
         <div className="flex items-center gap-2.5">
           <Bell className="w-3.5 h-3.5 text-[var(--color-brand-primary)]" />
-          <h2 className="text-[12px] font-bold text-white uppercase tracking-[0.14em]">Alert Feed</h2>
+          <h2 className="text-[12px] font-bold text-[var(--color-text-primary)] uppercase tracking-[0.14em]">Alert Feed</h2>
         </div>
         <span className="rounded-full border border-[var(--color-border-default)] px-2 py-0.5 text-[9px] font-extrabold text-[var(--color-text-muted)]">
           {newCount} NEW
@@ -50,7 +50,7 @@ export function AlertFeedSidebar({ alerts = [] }: { alerts?: AlertFeedItem[] }) 
         {alerts.length === 0 && (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center px-6 text-center">
             <CheckCircle2 className="h-7 w-7 text-emerald-400" />
-            <h3 className="mt-3 text-sm font-bold text-white">No active alerts</h3>
+            <h3 className="mt-3 text-sm font-bold text-[var(--color-text-primary)]">No active alerts</h3>
             <p className="mt-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
               The validated synthetic scenario is healthy. Alerts will appear here when supported observations require attention.
             </p>
@@ -60,7 +60,7 @@ export function AlertFeedSidebar({ alerts = [] }: { alerts?: AlertFeedItem[] }) 
         {/* Load more */}
         {alerts.length > 0 && <div className="pt-1">
           <button
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold text-[var(--color-brand-primary)] hover:text-white transition-all duration-150"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold text-[var(--color-brand-primary)] hover:text-[var(--color-text-primary)] transition-all duration-150"
             style={{
               background: 'rgba(56,189,248,0.03)',
               border:     '1px dashed rgba(56,189,248,0.2)',
@@ -133,7 +133,7 @@ function AlertCard({ alert }: { alert: AlertFeedItem }) {
           </div>
 
           {/* Message */}
-          <div className="text-[12px] font-semibold text-white leading-snug mb-2">
+          <div className="text-[12px] font-semibold text-[var(--color-text-primary)] leading-snug mb-2">
             {alert.text}
           </div>
 
@@ -150,7 +150,7 @@ function AlertCard({ alert }: { alert: AlertFeedItem }) {
             <div className="mt-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 onClick={() => setAcked(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-white transition-all duration-150"
+                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-[var(--color-text-primary)] transition-all duration-150"
                 style={{
                   background: 'rgba(56,189,248,0.06)',
                   border:     '1px solid rgba(56,189,248,0.2)',

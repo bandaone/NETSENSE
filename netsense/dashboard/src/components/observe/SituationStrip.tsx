@@ -32,7 +32,7 @@ function SituationCell({
       <div className="min-w-0">
         <div className="text-[11px] leading-none text-[var(--color-text-muted)]">{label}</div>
         <div className="mt-1 flex min-w-0 items-baseline gap-2">
-          <span className="flex-none text-[13px] font-semibold text-white">{value}</span>
+          <span className="flex-none text-[13px] font-semibold text-[var(--color-text-primary)]">{value}</span>
           <span className="hidden truncate text-[11px] text-[var(--color-text-muted)] xl:inline">{detail}</span>
         </div>
       </div>

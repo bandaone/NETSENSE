@@ -58,7 +58,7 @@ export function RelationshipDetailPanel({
               <EvidenceBadge kind={relationship.knowledgeKind} />
               <span className="text-[11px] text-[var(--color-text-muted)]">{humanize(relationship.status)}</span>
             </div>
-            <h2 className="mt-3 text-[16px] font-semibold capitalize text-white">
+            <h2 className="mt-3 text-[16px] font-semibold capitalize text-[var(--color-text-primary)]">
               {humanize(relationship.relationshipType)}
             </h2>
             <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
@@ -69,7 +69,7 @@ export function RelationshipDetailPanel({
             type="button"
             onClick={onClose}
             aria-label="Close relationship inspector"
-            className="flex h-8 w-8 flex-none items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+            className="flex h-8 w-8 flex-none items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -78,7 +78,7 @@ export function RelationshipDetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Relationship meaning</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Relationship meaning</h3>
           <dl className="mt-2">
             <Row label="Source" value={context.source?.displayName ?? 'Unresolved'} />
             <Row label="Source interface" value={context.sourceInterface?.name ?? 'Not identified'} mono />
@@ -90,7 +90,7 @@ export function RelationshipDetailPanel({
         </section>
 
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Observation window</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Observation window</h3>
           <dl className="mt-2">
             <Row label="First observed" value={relationship.firstObservedAt} mono />
             <Row label="Last observed" value={relationship.lastObservedAt} mono />
@@ -99,7 +99,7 @@ export function RelationshipDetailPanel({
         </section>
 
         <section className="px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Evidence and limitations</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Evidence and limitations</h3>
           {context.evidence.length === 0 ? (
             <p className="mt-2 text-[12px] text-[var(--color-text-muted)]">No evidence record resolves for this relationship.</p>
           ) : context.evidence.map(record => (

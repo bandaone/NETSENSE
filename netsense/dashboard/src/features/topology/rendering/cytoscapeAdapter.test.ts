@@ -56,6 +56,16 @@ describe('projectSnapshotToCytoscape', () => {
     expect(relationship?.data.lineStyle).toBe('dashed');
   });
 
+  it('preserves relationship health for theme-aware state rendering', () => {
+    const snapshot = structuredClone(healthyMukubaSnapshotFixture);
+    snapshot.relationships[0].status = 'down';
+    const elements = projectSnapshotToCytoscape(snapshot, healthyMukubaOperationsLayout);
+    const relationship = elements.find(element => element.data.id === snapshot.relationships[0].id);
+
+    expect(relationship?.data.relationshipStatus).toBe('down');
+    expect(relationship?.data.lineColor).toBe('var(--color-status-crit)');
+  });
+
   it('provides semantic-zoom labels without hard-coding sector roles into shapes', () => {
     const elements = projectSnapshotToCytoscape(
       healthyMukubaSnapshotFixture,

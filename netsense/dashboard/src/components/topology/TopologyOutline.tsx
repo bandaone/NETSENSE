@@ -27,7 +27,7 @@ export function TopologyOutline({
     <section className="h-full overflow-auto bg-[var(--color-bg-canvas)] p-4" aria-labelledby="topology-outline-heading">
       <div className="mx-auto max-w-[1180px]">
         <div className="mb-4">
-          <h2 id="topology-outline-heading" className="text-[15px] font-semibold text-white">Topology table</h2>
+          <h2 id="topology-outline-heading" className="text-[15px] font-semibold text-[var(--color-text-primary)]">Topology table</h2>
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
             Structured representation of {snapshot.site.name}. Select an entity to inspect its operational context.
           </p>
@@ -65,7 +65,7 @@ export function TopologyOutline({
                         type="button"
                         onClick={event => onSelect(node.id, event.currentTarget)}
                         aria-current={selected ? 'true' : undefined}
-                        className="text-left font-medium text-white underline-offset-4 hover:text-[var(--color-brand-primary)] hover:underline"
+                        className="text-left font-medium text-[var(--color-text-primary)] underline-offset-4 hover:text-[var(--color-brand-primary)] hover:underline"
                       >
                         {node.displayName}
                       </button>

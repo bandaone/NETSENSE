@@ -43,6 +43,27 @@ The interface must not use decoration to simulate technical depth. Glows, ambien
 - Health, freshness, monitoring coverage, management state, criticality, selection, and knowledge kind are independent visual dimensions.
 - Colour is never the only representation of a state.
 
+### Operating environments
+
+NetSense has two calibrated operating environments, not an open-ended theme
+system:
+
+- **Operations Dark** is the deliberate default for NOCs, control rooms, and
+  prolonged low-light monitoring. Its graphite stack suppresses ambient glare
+  while keeping evidence and abnormal states legible.
+- **Daylight** is a low-glare paper environment for offices, laptops, field
+  work, and demonstrations. It uses architectural graphite rather than pure
+  black on pure white and strengthens map edges for bright-room visibility.
+
+Changing environment must never change topology, status meaning, evidence
+basis, information density, or available actions. Relationship identities and
+fault overrides are separately calibrated in the canvas renderer. The operator's
+explicit choice is persisted and applied before first paint; the product does
+not silently follow an unrelated operating-system appearance preference.
+
+See [operating-environments-v1.md](./operating-environments-v1.md) for the
+implementation contract and palette rationale.
+
 ## Surfaces
 
 - Controls and rows use a 2–4px radius.

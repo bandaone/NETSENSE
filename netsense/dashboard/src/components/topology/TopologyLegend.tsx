@@ -20,7 +20,7 @@ export function TopologyLegend({ snapshot }: { snapshot: TopologySnapshot }) {
     <div className="absolute bottom-4 right-4 z-20">
       {open && (
         <div className="mb-2 w-[270px] border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] p-3 shadow-[var(--shadow-floating)]">
-          <div className="text-[12px] font-semibold text-white">Active map legend</div>
+          <div className="text-[12px] font-semibold text-[var(--color-text-primary)]">Active map legend</div>
           <div className="mt-3 text-[11px] font-medium text-[var(--color-text-muted)]">Relationship type</div>
           <div className="mt-2 space-y-2">
             {relationshipTypes.map(type => {
@@ -69,7 +69,7 @@ export function TopologyLegend({ snapshot }: { snapshot: TopologySnapshot }) {
         type="button"
         onClick={() => setOpen(current => !current)}
         aria-expanded={open}
-        className="flex h-8 items-center gap-2 border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+        className="flex h-8 items-center gap-2 border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] px-3 text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
       >
         Legend · {relationshipTypes.length} relationship types
         {open

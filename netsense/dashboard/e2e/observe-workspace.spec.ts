@@ -26,6 +26,33 @@ test('Observe exposes only supported, working workspace controls', async ({ page
   await expect(page.getByRole('complementary', { name: 'Operational context' })).toHaveCount(0);
 });
 
+test('operating environments are explicit, persistent, and preserve workflow semantics', async ({ page }) => {
+  await openObserve(page);
+
+  const root = page.locator('html');
+  const dark = page.getByRole('button', { name: 'Operations Dark' });
+  const daylight = page.getByRole('button', { name: 'Daylight' });
+
+  await expect(page.getByRole('group', { name: 'Display environment' })).toBeVisible();
+  await expect(root).toHaveAttribute('data-environment', 'operations-dark');
+  await expect(dark).toHaveAttribute('aria-pressed', 'true');
+  const darkCanvas = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-bg-canvas').trim());
+
+  await daylight.click();
+  await expect(root).toHaveAttribute('data-environment', 'daylight');
+  await expect(daylight).toHaveAttribute('aria-pressed', 'true');
+  const daylightCanvas = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-bg-canvas').trim());
+  expect(daylightCanvas).not.toBe(darkCanvas);
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Central Services Campus' })).toBeVisible();
+  await expect(root).toHaveAttribute('data-environment', 'daylight');
+  await expect(page.getByRole('button', { name: 'Daylight' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('region', { name: /Operational topology map/ })).toBeVisible();
+});
+
 test('keyboard user can inspect an entity through the synchronized topology table', async ({ page }) => {
   await openObserve(page);
   await page.getByRole('button', { name: 'Table' }).click();
@@ -165,6 +192,17 @@ test('@a11y Investigate and Resolve have no automated accessibility violations',
   await page.goto('/resolve');
   await expect(page.getByRole('heading', { name: 'Resolve with defensible evidence' })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('@a11y Daylight preserves accessibility across operator workflows', async ({ page }) => {
+  await page.goto('/observe');
+  await page.getByRole('button', { name: 'Daylight' }).click();
+
+  for (const workspace of ['observe', 'investigate', 'resolve']) {
+    await page.goto(`/${workspace}`);
+    await expect(page.locator('html')).toHaveAttribute('data-environment', 'daylight');
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
 });
 
 for (const viewport of [

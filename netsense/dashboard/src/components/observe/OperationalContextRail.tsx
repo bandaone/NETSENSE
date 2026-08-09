@@ -5,7 +5,7 @@ import type { SituationSummary } from '../../features/topology/state/selectors';
 function ContextSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-b border-[var(--color-border-subtle)] px-4 py-4 last:border-b-0">
-      <h2 className="text-[12px] font-semibold text-white">{title}</h2>
+      <h2 className="text-[12px] font-semibold text-[var(--color-text-primary)]">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -38,13 +38,13 @@ export function OperationalContextRail({
     >
       <div className="flex h-11 flex-none items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
         <div>
-          <h2 className="text-[13px] font-semibold text-white">Operational context</h2>
+          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Operational context</h2>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close operational context"
-          className="flex h-7 w-7 items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+          className="flex h-7 w-7 items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>

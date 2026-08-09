@@ -2,7 +2,8 @@
 
 **Review scope:** Observe, Investigate, Resolve, deterministic incident
 reasoning, incident workflow, topology search/filtering, relationship
-inspection, proposed contracts, and supporting documentation.
+inspection, calibrated Operations Dark and Daylight environments, proposed
+contracts, and supporting documentation.
 
 ## Outcome
 
@@ -39,10 +40,10 @@ unsupported score is claimed.
 `InvestigateWorkspace.tsx` (approximately 342 lines) are larger than desirable.
 Their internal components remain cohesive, but the next UI expansion should
 extract the reasoning rail sections and search rail into separately tested
-modules. `TopologyMap.tsx` also remains large because renderer lifecycle,
-semantic zoom, selection, tooltips, and controls share one adapter component.
-This is P1 maintainability debt, not a reason to add abstractions to the pure
-domain layer.
+modules. Cytoscape style construction is now isolated in `atlasStyles.ts`, but
+`TopologyMap.tsx` still owns renderer lifecycle, semantic zoom, selection,
+tooltips, and controls. This is P1 maintainability debt, not a reason to add
+abstractions to the pure domain layer.
 
 ### 3. Readability, naming, and maintainability
 
@@ -106,13 +107,14 @@ unimplemented.
 
 ### 8. Test coverage
 
-- 46 unit tests pass across 13 files.
-- Included domain/adapter coverage is 90.13% statements, 82.18% branches,
-  89.65% functions, and 90.13% lines, with enforced 80% thresholds.
-- 14 Playwright flows pass, including search, relationship inspection,
-  workflow transitions, alternate paths, axe, and all three target workstation
-  resolutions.
-- The dedicated axe gate reports zero automated violations.
+- 53 unit tests pass across 15 files.
+- Included domain/adapter coverage is 91.01% statements, 82.64% branches,
+  89.01% functions, and 91.01% lines, with enforced 80% thresholds.
+- 16 Playwright flows pass, including environment persistence, search,
+  relationship inspection, workflow transitions, alternate paths, axe, and all
+  three target workstation resolutions.
+- The dedicated axe coverage reports zero automated violations in Operations
+  Dark and Daylight across Observe, Investigate, and Resolve.
 
 Known gap: automated axe cannot prove full WCAG conformance. Screen-reader
 behaviour, focus order during dynamic filtering, zoom/reflow, and human colour
@@ -139,9 +141,9 @@ fixtures.
 
 Measured production output:
 
-- main JavaScript: approximately 827.11 kB minified / 251.55 kB gzip;
+- main JavaScript: approximately 834.72 kB minified / 253.36 kB gzip;
 - ELK worker: approximately 1,595.33 kB;
-- CSS: approximately 21.24 kB / 5.30 kB gzip.
+- CSS: approximately 24.09 kB / 6.09 kB gzip.
 
 The Vite chunk warning is valid. Before the 1,000-entity hardening milestone,
 route-split Observe/Investigate/Resolve, load Cytoscape/ELK only for map views,
@@ -157,6 +159,30 @@ for the current synthetic workspaces. A router and server-state cache should
 be introduced only when nested routes, deep links, request caching, and live
 mutations make their benefits measurable.
 
+### 12. Operating-environment review
+
+Operations Dark and Daylight are two bounded operating environments, not an
+extensible theme marketplace. Both use the same semantic tokens, topology
+positions, entity shapes, status symbols, evidence line styles, information
+density, and controls. The Cytoscape renderer reads the selected computed
+tokens and updates its existing style sheet in place; the graph is not rebuilt
+or repositioned.
+
+Visual review at 1440×900 confirms the intended distinction: Operations Dark
+uses neutral low-luminance graphite without decorative glow, while Daylight
+uses a low-glare paper canvas with independently strengthened text, borders,
+status colours, and relationship edges. It is not a mathematical colour
+inversion.
+
+Storage is failure-tolerant and contains no sensitive data. Invalid or blocked
+local storage returns to the deliberate Operations Dark default. The small
+pre-mount script prevents a theme flash, but duplicates the storage key and
+requires explicit treatment in a future strict Content Security Policy (nonce,
+hash, or external bootstrap). The renderer also carries Operations Dark fallback
+values in TypeScript so a missing stylesheet cannot make the topology
+invisible; this duplication is acceptable for resilience but should gain a
+token-parity test if palette ownership grows.
+
 ## Gate record
 
 | Gate | Result |
@@ -164,10 +190,12 @@ mutations make their benefits measurable.
 | Dependency tree | Pass |
 | TypeScript strict build | Pass |
 | ESLint, zero warnings | Pass |
-| Unit tests | 46/46 pass |
-| Coverage thresholds | Pass; 90.13/82.18/89.65/90.13 |
-| Playwright | 14/14 pass |
-| Axe | 2/2 suites; zero automated violations |
+| Unit tests | 53/53 pass |
+| Coverage thresholds | Pass; 91.01/82.64/89.01/91.01 |
+| Playwright | 16/16 pass |
+| Axe | Operations Dark and Daylight; zero automated violations |
+| Environment persistence | Pass; explicit choice survives reload |
+| Visual environment review | Pass at 1440×900; topology rendered in both |
 | Target resolutions | 1366×768, 1440×900, 1920×1080 pass |
 | Production build | Pass with documented chunk-size warning |
 | Production dependency audit | Zero vulnerabilities |

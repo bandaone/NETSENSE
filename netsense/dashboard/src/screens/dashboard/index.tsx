@@ -69,8 +69,8 @@ function ViewButton({
       className={cn(
         'flex h-8 items-center gap-2 border-l border-[var(--color-border-default)] px-3 text-[12px] first:border-l-0',
         active
-          ? 'bg-[var(--color-brand-soft)] text-white'
-          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
+          ? 'bg-[var(--color-brand-soft)] text-[var(--color-text-primary)]'
+          : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
       )}
     >
       {icon}
@@ -150,8 +150,8 @@ function ObserveWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
                 className={cn(
                   'flex h-8 items-center gap-2 border-l border-[var(--color-border-default)] px-3 text-[12px] first:border-l-0',
                   lens === candidate.id
-                    ? 'bg-[var(--color-brand-soft)] text-white'
-                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
+                    ? 'bg-[var(--color-brand-soft)] text-[var(--color-text-primary)]'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
                 )}
               >
                 {LENS_ICONS[candidate.id]}
@@ -189,8 +189,8 @@ function ObserveWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
               className={cn(
                 'flex h-8 items-center gap-2 border px-3 text-[12px]',
                 contextOpen
-                  ? 'border-[var(--color-brand-primary)]/50 bg-[var(--color-brand-soft)] text-white'
-                  : 'border-[var(--color-border-default)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
+                  ? 'border-[var(--color-brand-primary)]/50 bg-[var(--color-brand-soft)] text-[var(--color-text-primary)]'
+                  : 'border-[var(--color-border-default)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
               )}
             >
               <PanelRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -217,7 +217,7 @@ function ObserveWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
               ) : layoutError ? (
                 <div role="alert" className="flex h-full items-center justify-center bg-[var(--color-bg-canvas)] p-8">
                   <div className="max-w-md border-l-2 border-[var(--color-status-crit)] pl-4">
-                    <div className="text-[13px] font-semibold text-white">Atlas layout unavailable</div>
+                    <div className="text-[13px] font-semibold text-[var(--color-text-primary)]">Atlas layout unavailable</div>
                     <div className="mt-2 text-[12px] text-[var(--color-text-muted)]">{layoutError}</div>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ function ObserveWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
                     onBackgroundClick={selectedNode ? closeInspector : undefined}
                   />
                   <div className="pointer-events-none absolute left-4 top-4 z-20 border-l-2 border-[var(--color-brand-primary)] bg-[var(--color-bg-surface)] px-3 py-2 shadow-[var(--shadow-floating)]">
-                    <div className="text-[11px] font-semibold text-white">Atlas layered topology</div>
+                    <div className="text-[11px] font-semibold text-[var(--color-text-primary)]">Atlas layered topology</div>
                     <div className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">
                       {projectedSnapshot.nodes.length} entities · {projectedSnapshot.relationships.length} relationships
                       {layout?.computationMs !== undefined ? ` · ${layout.computationMs} ms` : ''}

@@ -3,6 +3,8 @@ import { Eye, Network, PanelLeftClose, PanelLeftOpen, Search, ShieldCheck } from
 import { useTopologyData } from '../../features/topology/components/topologyDataContext';
 import { cn } from '../../lib/utils';
 import type { WorkspaceMode } from '../../features/workspace/types';
+import { useOperatingEnvironment } from '../../features/theme/useOperatingEnvironment';
+import { OperatingEnvironmentSelector } from './OperatingEnvironmentSelector';
 
 interface NavItemProps {
   href: string;
@@ -29,8 +31,8 @@ function NavItem({ href, icon, label, collapsed, active, onClick }: NavItemProps
         'relative mx-2 flex h-10 items-center border-l-2 text-[13px] font-medium transition-colors',
         collapsed ? 'justify-center px-2' : 'gap-3 px-3',
         active
-          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-soft)] text-white'
-          : 'border-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
+          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-soft)] text-[var(--color-text-primary)]'
+          : 'border-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
       )}
     >
       <span className="flex-none" aria-hidden="true">{icon}</span>
@@ -64,6 +66,7 @@ export function Shell({
   onNavigate: (workspace: WorkspaceMode) => void;
 }) {
   const [collapsed, setCollapsed] = useCompactNavigation();
+  const [environment, setEnvironment] = useOperatingEnvironment();
   const { snapshot, isLoading } = useTopologyData();
 
   return (
@@ -82,7 +85,7 @@ export function Shell({
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <div className="text-[14px] font-semibold leading-none text-white">NetSense</div>
+              <div className="text-[14px] font-semibold leading-none text-[var(--color-text-primary)]">NetSense</div>
               <div className="mt-1 truncate text-[11px] text-[var(--color-text-muted)]">Evidence-led operations</div>
             </div>
           )}
@@ -131,7 +134,7 @@ export function Shell({
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
             title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="flex h-9 w-full items-center justify-center border border-[var(--color-border-subtle)] text-[var(--color-text-muted)] hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+            className="flex h-9 w-full items-center justify-center border border-[var(--color-border-subtle)] text-[var(--color-text-muted)] hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
           >
             {collapsed
               ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
@@ -143,19 +146,22 @@ export function Shell({
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-[52px] flex-none items-center justify-between border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] px-5">
           <div className="min-w-0">
-            <h1 className="truncate text-[14px] font-semibold text-white">
+            <h1 className="truncate text-[14px] font-semibold text-[var(--color-text-primary)]">
               {snapshot?.site.name ?? (isLoading ? 'Loading scope…' : 'Network operations')}
             </h1>
             <p className="mt-0.5 truncate text-[12px] text-[var(--color-text-muted)]">
               {snapshot ? `${snapshot.organisation.name} / ${snapshot.site.name}` : 'Validated operational context'}
             </p>
           </div>
-          {snapshot?.synthetic && (
-            <div className="ml-4 flex flex-none items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-status-unknown)]" aria-hidden="true" />
-              Synthetic demonstration
-            </div>
-          )}
+          <div className="ml-4 flex flex-none items-center gap-3">
+            <OperatingEnvironmentSelector value={environment} onChange={setEnvironment} />
+            {snapshot?.synthetic && (
+              <div className="hidden items-center gap-2 text-[12px] text-[var(--color-text-secondary)] xl:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-status-unknown)]" aria-hidden="true" />
+                Synthetic demonstration
+              </div>
+            )}
+          </div>
         </header>
 
         <div className="relative min-h-0 flex-1 overflow-hidden">

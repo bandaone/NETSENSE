@@ -72,7 +72,7 @@ function Timeline({ scenario }: { scenario: IncidentScenario }) {
   return (
     <aside className="hidden h-full w-[264px] flex-none flex-col border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] 2xl:flex" aria-label="Incident evidence timeline">
       <div className="flex-none border-b border-[var(--color-border-subtle)] px-4 py-3">
-        <h3 className="text-[12px] font-semibold text-white">Evidence timeline</h3>
+        <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Evidence timeline</h3>
         <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">Ordered observations, not inferred events</p>
       </div>
       <ol className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -118,7 +118,7 @@ function CandidateCard({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] font-semibold text-white">{candidate.rank}. {targetLabel(snapshot, candidate.target)}</span>
+        <span className="text-[12px] font-semibold text-[var(--color-text-primary)]">{candidate.rank}. {targetLabel(snapshot, candidate.target)}</span>
         <span className="flex-none text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">{candidate.confidence}</span>
       </div>
       <div className={cn(
@@ -172,13 +172,13 @@ function ReasoningPanel({
           </span>
           <span className="text-[11px] capitalize text-[var(--color-text-secondary)]">{workflow.state}</span>
         </div>
-        <h2 className="mt-3 text-[16px] font-semibold leading-5 text-white">{scenario.incident.title}</h2>
+        <h2 className="mt-3 text-[16px] font-semibold leading-5 text-[var(--color-text-primary)]">{scenario.incident.title}</h2>
         <p className="mt-1 font-mono text-[10px] text-[var(--color-text-muted)]">{scenario.incident.id}</p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <details className="border-b border-[var(--color-border-subtle)] px-5 py-3 2xl:hidden">
-          <summary className="text-[12px] font-semibold text-white">Evidence timeline · {scenario.observations.length} observations</summary>
+          <summary className="text-[12px] font-semibold text-[var(--color-text-primary)]">Evidence timeline · {scenario.observations.length} observations</summary>
           <ol className="mt-3 space-y-3">
             {scenario.observations.map(observation => (
               <li key={observation.id} className="border-l border-[var(--color-border-default)] pl-3">
@@ -191,7 +191,7 @@ function ReasoningPanel({
         </details>
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[12px] font-semibold text-white">Probable-source candidates</h3>
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Probable-source candidates</h3>
             <span className="text-[10px] text-[var(--color-text-muted)]">Deterministic analysis</span>
           </div>
           <div className="mt-3 space-y-2">
@@ -233,7 +233,7 @@ function ReasoningPanel({
         </section>
 
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Impact classification</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Impact classification</h3>
           <div className="mt-2 space-y-3">
             {[...impacts.entries()].map(([classification, items]) => (
               <div key={classification}>
@@ -256,7 +256,7 @@ function ReasoningPanel({
         </section>
 
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Safe next checks</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Safe next checks</h3>
           <ol className="mt-2 space-y-3">
             {analysis.safeNextChecks.map((check, index) => (
               <li key={check.id} className="grid grid-cols-[20px_1fr] gap-2 text-[11px]">
@@ -272,7 +272,7 @@ function ReasoningPanel({
         </section>
 
         <section className="border-b border-[var(--color-border-subtle)] px-5 py-4">
-          <h3 className="text-[12px] font-semibold text-white">Limitations</h3>
+          <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Limitations</h3>
           <ul className="mt-2 list-disc space-y-2 pl-4 text-[11px] leading-4 text-[var(--color-text-muted)]">
             {analysis.limitations.map(limitation => <li key={limitation}>{limitation}</li>)}
           </ul>
@@ -280,7 +280,7 @@ function ReasoningPanel({
 
         <section className="px-5 py-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[12px] font-semibold text-white">Operator actions</h3>
+            <h3 className="text-[12px] font-semibold text-[var(--color-text-primary)]">Operator actions</h3>
             <span className="text-[9px] uppercase tracking-[0.08em] text-[var(--color-status-unknown)]">Session only</span>
           </div>
           <p className="mt-1 text-[10px] leading-4 text-[var(--color-text-muted)]">Actions are not durable until the authenticated platform API is implemented.</p>
@@ -290,14 +290,14 @@ function ReasoningPanel({
             disabled={workflow.state === 'resolved'}
             aria-label="Investigation notes"
             placeholder="Record checks, evidence, and the actual resolution…"
-            className="mt-3 min-h-[88px] w-full resize-y border border-[var(--color-border-default)] bg-[var(--color-bg-base)] p-3 text-[11px] leading-4 text-white placeholder:text-[var(--color-text-disabled)] disabled:opacity-60"
+            className="mt-3 min-h-[88px] w-full resize-y border border-[var(--color-border-default)] bg-[var(--color-bg-base)] p-3 text-[11px] leading-4 text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] disabled:opacity-60"
           />
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
               disabled={workflow.state !== 'open'}
               onClick={() => applyWorkflow(() => acknowledgeIncident(workflow, 'Demo operator', new Date().toISOString()))}
-              className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Acknowledge
             </button>
@@ -305,7 +305,7 @@ function ReasoningPanel({
               type="button"
               disabled={!draftNotes.trim() || draftNotes === workflow.notes || workflow.state === 'resolved'}
               onClick={() => applyWorkflow(() => updateIncidentNotes(workflow, draftNotes, 'Demo operator', new Date().toISOString()))}
-              className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+              className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Save className="h-3.5 w-3.5" aria-hidden="true" /> Save notes
             </button>
@@ -370,7 +370,7 @@ export function ResolveWorkspace() {
     <div className="flex h-full flex-col overflow-hidden bg-[var(--color-bg-base)]">
       <header className="flex h-12 flex-none items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
         <div>
-          <h2 className="text-[13px] font-semibold text-white">Resolve with defensible evidence</h2>
+          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Resolve with defensible evidence</h2>
           <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">Probable source, impact, alternatives, limitations, and authorised next checks</p>
         </div>
         <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
@@ -415,7 +415,7 @@ export function ResolveWorkspace() {
               />
               <TopologyLegend snapshot={incidentSnapshot} />
               <div className="pointer-events-none absolute left-4 top-4 max-w-[290px] border-l-2 border-[var(--color-status-warn)] bg-[var(--color-bg-surface)] px-3 py-2 shadow-[var(--shadow-floating)]">
-                <div className="flex items-center gap-2 text-[11px] font-semibold text-white">
+                <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--color-text-primary)]">
                   <GitBranch className="h-3.5 w-3.5 text-[var(--color-status-warn)]" aria-hidden="true" />
                   Incident subgraph
                 </div>

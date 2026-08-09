@@ -3,46 +3,150 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  :root[data-environment='operations-dark'] {
     color-scheme: dark;
 
-    --color-bg-base: #0a0e13;
-    --color-bg-canvas: #0c1117;
-    --color-bg-surface: #11171e;
-    --color-bg-elevated: #171e27;
-    --color-bg-hover: #1b232d;
+    /* Operations Dark: neutral graphite for prolonged, low-light monitoring. */
+    --color-bg-base: #0d1116;
+    --color-bg-canvas: #10161d;
+    --color-bg-surface: #151c24;
+    --color-bg-elevated: #1a232d;
+    --color-bg-hover: #202b36;
 
-    --color-border-subtle: #202832;
-    --color-border-default: #2a3541;
-    --color-border-strong: #445261;
+    --color-border-subtle: #25313c;
+    --color-border-default: #34414d;
+    --color-border-strong: #53616d;
 
-    --color-brand-primary: #59afc2;
-    --color-brand-dim: #357b8b;
-    --color-brand-soft: rgba(89, 175, 194, 0.11);
+    --color-brand-primary: #62b5c6;
+    --color-brand-dim: #347887;
+    --color-brand-soft: rgba(98, 181, 198, 0.12);
 
-    --color-status-ok: #65ad7d;
-    --color-status-ok-dim: rgba(101, 173, 125, 0.1);
-    --color-status-warn: #d0a05b;
-    --color-status-warn-dim: rgba(208, 160, 91, 0.12);
-    --color-status-crit: #d56a6a;
-    --color-status-crit-dim: rgba(213, 106, 106, 0.12);
-    --color-status-unknown: #8b96a3;
-    --color-status-maint: #a591bd;
-    --color-status-learning: #6aa8a5;
+    --color-status-ok: #70bc88;
+    --color-status-ok-dim: rgba(112, 188, 136, 0.11);
+    --color-status-warn: #d7a75f;
+    --color-status-warn-dim: rgba(215, 167, 95, 0.13);
+    --color-status-crit: #df7777;
+    --color-status-crit-dim: rgba(223, 119, 119, 0.13);
+    --color-status-unknown: #98a4af;
+    --color-status-maint: #ad98c3;
+    --color-status-learning: #73b1ad;
 
-    --color-knowledge-observed: #8fa0af;
-    --color-knowledge-configured: #9a8db0;
-    --color-knowledge-derived: #7ea2a6;
-    --color-knowledge-inferred: #b0926f;
-    --color-knowledge-predicted: #a87c93;
-    --color-knowledge-unknown: #7b8590;
+    --color-knowledge-observed: #a0aeba;
+    --color-knowledge-configured: #aa9abc;
+    --color-knowledge-derived: #8eb2b5;
+    --color-knowledge-inferred: #bda07b;
+    --color-knowledge-predicted: #b78ba1;
+    --color-knowledge-unknown: #8c97a2;
 
-    --color-text-primary: #e8edf2;
-    --color-text-secondary: #aab4bf;
-    --color-text-muted: #818c99;
-    --color-text-disabled: #687482;
+    --color-text-primary: #edf1f4;
+    --color-text-secondary: #b3bdc5;
+    --color-text-muted: #8f9aa4;
+    --color-text-disabled: #707c86;
     --color-text-inverse: #081016;
 
+    --color-scrollbar: #43515e;
+    --color-selection: rgba(98, 181, 198, 0.3);
+    --shadow-floating: 0 18px 44px rgba(0, 0, 0, 0.44);
+
+    --atlas-node-text: #d5dde4;
+    --atlas-node-surface: #17212a;
+    --atlas-node-partial: #1b2631;
+    --atlas-node-service: #1a2630;
+    --atlas-node-capability: #1d282f;
+    --atlas-node-border: #5c6a76;
+    --atlas-node-service-border: #667581;
+    --atlas-node-capability-border: #72808b;
+    --atlas-group-text: #a8b3bd;
+    --atlas-group-surface: #121920;
+    --atlas-group-border: #3b4854;
+    --atlas-group-opacity: 0.46;
+    --atlas-edge-text: #b5bec7;
+    --atlas-edge-physical: #71808d;
+    --atlas-edge-layer2: #7e8994;
+    --atlas-edge-layer3: #758da4;
+    --atlas-edge-flow: #709990;
+    --atlas-edge-hosts: #7c8995;
+    --atlas-edge-dependency: #7395a5;
+    --atlas-edge-control: #bc9561;
+    --atlas-edge-serves: #8296a8;
+    --atlas-edge-observed: #6c9691;
+    --atlas-edge-redundancy: #969dae;
+    --atlas-edge-conduit: #9985a6;
+  }
+
+  :root[data-environment='daylight'] {
+    color-scheme: light;
+
+    /* Daylight: low-glare paper and architectural graphite for bright rooms. */
+    --color-bg-base: #eef1f3;
+    --color-bg-canvas: #f5f6f5;
+    --color-bg-surface: #ffffff;
+    --color-bg-elevated: #f8fafb;
+    --color-bg-hover: #e4eaee;
+
+    --color-border-subtle: #d9dfe3;
+    --color-border-default: #c3cdd3;
+    --color-border-strong: #8b99a3;
+
+    --color-brand-primary: #176b7a;
+    --color-brand-dim: #0f5260;
+    --color-brand-soft: rgba(23, 107, 122, 0.1);
+
+    --color-status-ok: #247346;
+    --color-status-ok-dim: rgba(36, 115, 70, 0.1);
+    --color-status-warn: #865710;
+    --color-status-warn-dim: rgba(134, 87, 16, 0.1);
+    --color-status-crit: #a33838;
+    --color-status-crit-dim: rgba(163, 56, 56, 0.1);
+    --color-status-unknown: #586572;
+    --color-status-maint: #69517f;
+    --color-status-learning: #2d6d69;
+
+    --color-knowledge-observed: #4f5e6a;
+    --color-knowledge-configured: #675479;
+    --color-knowledge-derived: #386c70;
+    --color-knowledge-inferred: #79592f;
+    --color-knowledge-predicted: #75455d;
+    --color-knowledge-unknown: #59646e;
+
+    --color-text-primary: #182129;
+    --color-text-secondary: #3f4d58;
+    --color-text-muted: #5e6b75;
+    --color-text-disabled: #7a8791;
+    --color-text-inverse: #f7fafb;
+
+    --color-scrollbar: #aab4bb;
+    --color-selection: rgba(23, 107, 122, 0.2);
+    --shadow-floating: 0 18px 42px rgba(36, 48, 57, 0.16);
+
+    --atlas-node-text: #26333c;
+    --atlas-node-surface: #ffffff;
+    --atlas-node-partial: #edf2f4;
+    --atlas-node-service: #f3f7f8;
+    --atlas-node-capability: #f8f5ef;
+    --atlas-node-border: #667783;
+    --atlas-node-service-border: #71838e;
+    --atlas-node-capability-border: #827866;
+    --atlas-group-text: #4b5963;
+    --atlas-group-surface: #e8edef;
+    --atlas-group-border: #aeb9c0;
+    --atlas-group-opacity: 0.68;
+    --atlas-edge-text: #43525d;
+    --atlas-edge-physical: #536570;
+    --atlas-edge-layer2: #5f6d76;
+    --atlas-edge-layer3: #496b86;
+    --atlas-edge-flow: #3f756d;
+    --atlas-edge-hosts: #586a75;
+    --atlas-edge-dependency: #3f6f83;
+    --atlas-edge-control: #855a1d;
+    --atlas-edge-serves: #516d82;
+    --atlas-edge-observed: #3f736d;
+    --atlas-edge-redundancy: #665f7a;
+    --atlas-edge-conduit: #705779;
+  }
+
+  :root {
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -55,8 +159,6 @@
     --radius-panel: 4px;
     --radius-floating: 7px;
     --radius-full: 9999px;
-
-    --shadow-floating: 0 16px 40px rgba(0, 0, 0, 0.42);
 
     --font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -89,6 +191,7 @@
   input,
   select,
   textarea {
+    color: inherit;
     font: inherit;
   }
 
@@ -102,7 +205,7 @@
   }
 
   ::selection {
-    background: rgba(89, 175, 194, 0.3);
+    background: var(--color-selection);
   }
 
   ::-webkit-scrollbar {
@@ -117,7 +220,7 @@
   ::-webkit-scrollbar-thumb {
     border: 2px solid transparent;
     border-radius: var(--radius-full);
-    background: #394553;
+    background: var(--color-scrollbar);
     background-clip: padding-box;
   }
 }

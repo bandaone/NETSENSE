@@ -88,14 +88,14 @@ function SearchRail({
             value={filters.query}
             onChange={event => onFiltersChange({ ...filters, query: event.target.value })}
             placeholder="Name, IP, interface, role…"
-            className="h-9 w-full border border-[var(--color-border-default)] bg-[var(--color-bg-base)] pl-9 pr-8 text-[12px] text-white placeholder:text-[var(--color-text-disabled)]"
+            className="h-9 w-full border border-[var(--color-border-default)] bg-[var(--color-bg-base)] pl-9 pr-8 text-[12px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)]"
           />
           {filters.query && (
             <button
               type="button"
               onClick={() => onFiltersChange({ ...filters, query: '' })}
               aria-label="Clear topology search"
-              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center text-[var(--color-text-muted)] hover:text-white"
+              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
@@ -194,7 +194,7 @@ function SearchRail({
                   <button
                     type="button"
                     onClick={event => onSelectRelationship(relationship.id, event.currentTarget)}
-                    className="w-full px-3 py-2 text-left text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+                    className="w-full px-3 py-2 text-left text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
                   >
                     <span className="block">{humanize(relationship.relationshipType)}</span>
                     <span className="mt-0.5 block truncate text-[10px] text-[var(--color-text-muted)]">
@@ -267,7 +267,7 @@ export function InvestigateWorkspace({ snapshot }: { snapshot: TopologySnapshot 
     <div className="flex h-full flex-col overflow-hidden bg-[var(--color-bg-base)]">
       <header className="flex h-12 flex-none items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
         <div>
-          <h2 className="text-[13px] font-semibold text-white">Investigate the evidence</h2>
+          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Investigate the evidence</h2>
           <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">Search, focus, and explain entities and relationships without changing the saved map.</p>
         </div>
         <div className="flex border border-[var(--color-border-default)]" aria-label="Investigation lens">
@@ -280,8 +280,8 @@ export function InvestigateWorkspace({ snapshot }: { snapshot: TopologySnapshot 
               className={cn(
                 'flex h-8 items-center gap-2 border-l border-[var(--color-border-default)] px-3 text-[11px] first:border-l-0',
                 candidate.id === lens
-                  ? 'bg-[var(--color-brand-soft)] text-white'
-                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
+                  ? 'bg-[var(--color-brand-soft)] text-[var(--color-text-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]',
               )}
             >
               {LENS_ICON[candidate.id]}
@@ -326,7 +326,7 @@ export function InvestigateWorkspace({ snapshot }: { snapshot: TopologySnapshot 
               />
               <TopologyLegend snapshot={filteredSnapshot} />
               <div className="pointer-events-none absolute left-4 top-4 border-l-2 border-[var(--color-brand-primary)] bg-[var(--color-bg-surface)] px-3 py-2 shadow-[var(--shadow-floating)]">
-                <div className="text-[11px] font-semibold text-white">Stable investigation context</div>
+                <div className="text-[11px] font-semibold text-[var(--color-text-primary)]">Stable investigation context</div>
                 <div className="mt-0.5 text-[10px] text-[var(--color-text-muted)]">{filteredSnapshot.nodes.length} visible · {matches.length} matching</div>
               </div>
             </>

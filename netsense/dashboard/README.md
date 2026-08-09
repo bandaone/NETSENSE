@@ -25,11 +25,19 @@ npm run build
 
 The local preview routes are `/observe`, `/investigate`, and `/resolve`.
 
+The header provides two calibrated display environments: Operations Dark for
+low-light monitoring and Daylight for bright offices, field use, and demos.
+The choice persists in the browser and preserves identical topology semantics.
+
 ## Architecture
 
 - `src/features/topology/domain` owns versioned topology semantics and graph
   invariants.
 - `src/features/topology/layout` owns renderer-independent stored positions.
+- `src/features/topology/rendering` translates semantic map grammar and the
+  active operating-environment tokens into Cytoscape styles.
+- `src/features/theme` owns explicit environment selection and safe local
+  persistence.
 - `src/features/incidents/domain` owns deterministic reasoning and workflow
   rules.
 - `src/features/**/data/fixtures` contains explicitly synthetic scenarios.

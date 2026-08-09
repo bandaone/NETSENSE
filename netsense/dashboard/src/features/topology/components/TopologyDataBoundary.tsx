@@ -50,7 +50,7 @@ export function TopologyDataBoundary({ children }: TopologyDataBoundaryProps) {
     return (
       <div role="alert" className="flex h-full items-center justify-center p-8 text-center">
         <div className="max-w-md border-l-2 border-[var(--color-status-crit)] pl-4 text-left">
-          <h2 className="text-base font-semibold text-white">Topology unavailable</h2>
+          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Topology unavailable</h2>
           <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{error}</p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             Validate the data source or repository adapter before retrying.

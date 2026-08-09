@@ -2,9 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="NetSense Atlas evidence-led network operations workspace" />
+    <title>NetSense Atlas</title>
+    <script>
+      (() => {
+        const key = 'netsense:operating-environment:v1';
+        try {
+          const stored = localStorage.getItem(key);
+          document.documentElement.dataset.environment = stored === 'daylight'
+            ? 'daylight'
+            : 'operations-dark';
+        } catch {
+          document.documentElement.dataset.environment = 'operations-dark';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

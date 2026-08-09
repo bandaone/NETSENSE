@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import cytoscape, { type Core, type ElementDefinition, type StylesheetStyle } from 'cytoscape';
+import cytoscape, { type Core, type ElementDefinition } from 'cytoscape';
 import { Lock, Maximize2, Minus, Plus } from 'lucide-react';
 import {
   isAtlasEdgeData,
@@ -7,6 +7,10 @@ import {
   type AtlasCytoscapeEdgeData,
   type AtlasCytoscapeNodeData,
 } from '../../features/topology/rendering/cytoscapeAdapter';
+import {
+  createAtlasStyles,
+  readAtlasRendererPalette,
+} from '../../features/topology/rendering/atlasStyles';
 import { cn } from '../../lib/utils';
 
 export interface TopologyMapProps {
@@ -24,209 +28,6 @@ interface NodeTooltip {
   y: number;
   data: AtlasCytoscapeNodeData;
 }
-
-const ATLAS_STYLE_DEFINITIONS = [
-  {
-    selector: 'node.atlas-entity',
-    style: {
-      label: 'data(label)',
-      color: '#cbd3dc',
-      'font-family': 'Inter, ui-sans-serif, sans-serif',
-      'font-size': 10.5,
-      'font-weight': 500,
-      'text-wrap': 'wrap',
-      'text-max-width': 104,
-      'text-valign': 'center',
-      'text-halign': 'center',
-      'text-margin-y': 0,
-      'text-background-color': '#0c1117',
-      'text-background-opacity': 0,
-      'text-background-padding': 0,
-      'text-background-shape': 'rectangle',
-      width: 'data(width)',
-      height: 'data(height)',
-      shape: 'data(shape)',
-      'background-color': '#151e27',
-      'border-width': 1.5,
-      'border-color': '#53616e',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[operationalHealth = "degraded"]',
-    style: {
-      'border-width': 2.5,
-      'border-color': '#d0a05b',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[operationalHealth = "unreachable"]',
-    style: {
-      'border-width': 2.5,
-      'border-color': '#d56a6a',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[operationalHealth = "unknown"]',
-    style: {
-      'border-color': '#8b96a3',
-      'border-style': 'dashed',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[coverage = "partial"]',
-    style: {
-      'background-color': '#1a222c',
-      'background-opacity': 0.72,
-    },
-  },
-  {
-    selector: 'node.atlas-entity[analysisState = "confirmed"]',
-    style: {
-      'border-width': 3,
-      'border-color': '#d56a6a',
-      'underlay-color': '#d56a6a',
-      'underlay-opacity': 0.12,
-      'underlay-padding': 7,
-    },
-  },
-  {
-    selector: 'node.atlas-entity[analysisState = "likely"]',
-    style: {
-      'border-width': 2.5,
-      'border-color': '#d0a05b',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[analysisState = "at_risk"]',
-    style: {
-      'border-style': 'dashed',
-      'border-color': '#d0a05b',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[analysisState = "alternate"]',
-    style: {
-      'border-width': 2,
-      'border-color': '#65ad7d',
-      'underlay-color': '#65ad7d',
-      'underlay-opacity': 0.08,
-      'underlay-padding': 5,
-    },
-  },
-  {
-    selector: 'node.atlas-entity[analysisState = "unknown"]',
-    style: {
-      'border-style': 'dotted',
-      'border-color': '#8b96a3',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[kind = "application"], node.atlas-entity[kind = "service"], node.atlas-entity[kind = "workload"]',
-    style: {
-      'background-color': '#18232d',
-      'border-color': '#5c6b78',
-    },
-  },
-  {
-    selector: 'node.atlas-entity[kind = "capability"], node.atlas-entity[kind = "process"]',
-    style: {
-      'background-color': '#1b252d',
-      'border-color': '#687783',
-    },
-  },
-  {
-    selector: 'node.atlas-group',
-    style: {
-      label: 'data(label)',
-      color: '#9ba6b2',
-      'font-family': 'Inter, ui-sans-serif, sans-serif',
-      'font-size': 12,
-      'font-weight': 600,
-      'text-valign': 'top',
-      'text-halign': 'center',
-      'text-margin-y': 9,
-      'background-color': '#10171e',
-      'background-opacity': 0.42,
-      'border-width': 1,
-      'border-color': '#34404c',
-      'border-style': 'solid',
-      padding: 32,
-      shape: 'rectangle',
-    },
-  },
-  {
-    selector: 'node:selected',
-    style: {
-      'overlay-color': '#59afc2',
-      'overlay-opacity': 0.1,
-      'overlay-padding': 7,
-      'border-width': 2.5,
-      'border-color': '#59afc2',
-    },
-  },
-  {
-    selector: 'edge',
-    style: {
-      width: 'data(width)',
-      'line-color': 'data(lineColor)',
-      'line-style': 'data(lineStyle)',
-      'curve-style': 'taxi',
-      'taxi-direction': 'rightward',
-      'taxi-turn': '50%',
-      'taxi-turn-min-distance': 18,
-      'target-arrow-shape': 'data(targetArrowShape)',
-      'target-arrow-color': 'data(lineColor)',
-      'arrow-scale': 0.68,
-      opacity: 'data(opacity)',
-      label: 'data(label)',
-      color: '#aab4be',
-      'font-family': 'Inter, ui-sans-serif, sans-serif',
-      'font-size': 9,
-      'text-background-color': '#0c1117',
-      'text-background-opacity': 0.94,
-      'text-background-padding': 3,
-      'text-rotation': 'autorotate',
-    },
-  },
-  {
-    selector: 'edge[relationshipType = "redundancy_peer"]',
-    style: {
-      'curve-style': 'unbundled-bezier',
-      'control-point-distance': 34,
-      'control-point-weight': 0.5,
-    },
-  },
-  {
-    selector: 'edge:selected',
-    style: {
-      'line-color': '#59afc2',
-      'target-arrow-color': '#59afc2',
-      opacity: 1,
-      'overlay-color': '#59afc2',
-      'overlay-opacity': 0.07,
-      'overlay-padding': 4,
-    },
-  },
-  {
-    selector: '.atlas-muted',
-    style: {
-      opacity: 0.14,
-      'text-opacity': 0.08,
-    },
-  },
-  {
-    selector: 'edge.atlas-related',
-    style: {
-      opacity: 0.96,
-      'line-color': '#59afc2',
-      'target-arrow-color': '#59afc2',
-    },
-  },
-] as const;
-
-// Cytoscape supports data(...) mappings that are narrower than its public
-// TypeScript declarations for some style properties.
-const ATLAS_STYLES = ATLAS_STYLE_DEFINITIONS as unknown as StylesheetStyle[];
 
 function updateSemanticPresentation(cy: Core): void {
   const zoom = cy.zoom();
@@ -273,7 +74,7 @@ export function TopologyMap({
     const cy = cytoscape({
       container: containerRef.current,
       elements: initialElementsRef.current,
-      style: ATLAS_STYLES,
+      style: createAtlasStyles(readAtlasRendererPalette(document.documentElement)),
       layout: { name: 'preset', fit: true, padding: 54 },
       wheelSensitivity: 0.12,
       minZoom: 0.25,
@@ -322,9 +123,20 @@ export function TopologyMap({
     });
     resizeObserver.observe(containerRef.current);
 
+    const themeObserver = new MutationObserver(mutations => {
+      if (!mutations.some(mutation => mutation.attributeName === 'data-environment')) return;
+      cy.style(createAtlasStyles(readAtlasRendererPalette(document.documentElement)));
+      updateSemanticPresentation(cy);
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-environment'],
+    });
+
     return () => {
       cancelAnimationFrame(resizeFrame);
       resizeObserver.disconnect();
+      themeObserver.disconnect();
       cy.destroy();
       cyRef.current = undefined;
     };
@@ -416,7 +228,7 @@ export function TopologyMap({
           style={{ left: tooltip.x, top: tooltip.y, transform: 'translateY(-50%)' }}
         >
           <div className="flex items-center justify-between gap-4">
-            <span className="text-[13px] font-semibold text-white">{tooltip.data.displayName}</span>
+            <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">{tooltip.data.displayName}</span>
             <span className="text-[12px]" style={{ color: tooltip.data.statusColor }}>
               <span aria-hidden="true">{tooltip.data.statusMarker}</span>{' '}
               {tooltip.data.operationalHealth}
@@ -438,7 +250,7 @@ export function TopologyMap({
             onClick={() => zoomBy(1.2)}
             aria-label="Zoom in"
             title="Zoom in"
-            className="flex h-8 w-8 items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+            className="flex h-8 w-8 items-center justify-center text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -447,7 +259,7 @@ export function TopologyMap({
             onClick={() => zoomBy(0.8)}
             aria-label="Zoom out"
             title="Zoom out"
-            className="flex h-8 w-8 items-center justify-center border-l border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+            className="flex h-8 w-8 items-center justify-center border-l border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
           >
             <Minus className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -457,7 +269,7 @@ export function TopologyMap({
           onClick={fitView}
           aria-label="Fit topology to view"
           title="Fit topology to view"
-          className="flex h-8 w-8 items-center justify-center border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-white"
+          className="flex h-8 w-8 items-center justify-center border border-[var(--color-border-default)] bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
         >
           <Maximize2 className="h-4 w-4" aria-hidden="true" />
         </button>

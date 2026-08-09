@@ -5,10 +5,10 @@ import type { LayoutProfile } from '../layout/types';
 import { KNOWLEDGE_GRAMMAR, RELATIONSHIP_GRAMMAR } from './visualGrammar';
 
 const STATUS_COLOR: Record<TopologyNode['assessment']['operationalHealth'], string> = {
-  healthy: '#65ad7d',
-  degraded: '#d0a05b',
-  unreachable: '#d56a6a',
-  unknown: '#8b96a3',
+  healthy: 'var(--color-status-ok)',
+  degraded: 'var(--color-status-warn)',
+  unreachable: 'var(--color-status-crit)',
+  unknown: 'var(--color-status-unknown)',
 };
 
 const STATUS_MARKER: Record<TopologyNode['assessment']['operationalHealth'], string> = {
@@ -64,6 +64,7 @@ export interface AtlasCytoscapeEdgeData {
   source: string;
   target: string;
   relationshipType: TopologyRelationship['relationshipType'];
+  relationshipStatus: TopologyRelationship['status'];
   relationshipLabel: string;
   knowledgeKind: TopologyRelationship['knowledgeKind'];
   knowledgeLabel: string;
@@ -195,17 +196,18 @@ export function projectSnapshotToCytoscape(
     const relationshipGrammar = RELATIONSHIP_GRAMMAR[relationship.relationshipType];
     const knowledgeGrammar = KNOWLEDGE_GRAMMAR[relationship.knowledgeKind];
     const stateColor = relationship.status === 'down'
-      ? '#d56a6a'
+      ? 'var(--color-status-crit)'
       : relationship.status === 'degraded'
-        ? '#d0a05b'
+        ? 'var(--color-status-warn)'
         : relationship.status === 'unknown'
-          ? '#8b96a3'
+          ? 'var(--color-status-unknown)'
           : relationshipGrammar.lineColor;
     const data: AtlasCytoscapeEdgeData = {
       id: relationship.id,
       source,
       target,
       relationshipType: relationship.relationshipType,
+      relationshipStatus: relationship.status,
       relationshipLabel: relationshipGrammar.label,
       knowledgeKind: relationship.knowledgeKind,
       knowledgeLabel: knowledgeGrammar.label,
