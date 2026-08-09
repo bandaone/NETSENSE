@@ -1,0 +1,341 @@
+openapi: 3.1.0
+info:
+  title: NetSense Platform API
+  version: 1.0.0
+  description: >-
+    Proposed contract for the tenant-scoped Atlas and incident workflows. This
+    contract does not imply that the platform service is implemented.
+x-netsense-status: proposed
+servers:
+  - url: https://{host}/api/v1
+    variables:
+      host:
+        default: netsense.example
+security:
+  - bearerAuth: []
+paths:
+  /sites/{siteId}/topology:
+    get:
+      operationId: getTopologySnapshot
+      summary: Return one validated topology snapshot
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - name: observedAt
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Tenant-scoped topology snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologySnapshot'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+  /sites/{siteId}/topology/stream:
+    get:
+      operationId: connectTopologyStream
+      summary: Upgrade to an authenticated topology-diff WebSocket
+      description: >-
+        WebSocket messages conform to topology-diff-schema.json. Clients reject
+        unsupported schema versions, duplicate or stale sequence numbers, and
+        request a fresh bounded snapshot after a sequence gap.
+      x-websocket: true
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - name: afterSequence
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '101':
+          description: Switching Protocols
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /sites/{siteId}/incidents:
+    get:
+      operationId: listIncidents
+      summary: List incidents visible to the requesting tenant and role
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - name: state
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/IncidentState'
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 500
+      responses:
+        '200':
+          description: Cursor-paginated incidents
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items, nextCursor]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/IncidentSummary' }
+                  nextCursor:
+                    type: [string, 'null']
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /incidents/{incidentId}/analysis:
+    get:
+      operationId: getIncidentAnalysis
+      summary: Return validated deterministic incident analysis output
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+      responses:
+        '200':
+          description: Evidence-backed analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentAnalysis'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /incidents/{incidentId}/acknowledgements:
+    post:
+      operationId: acknowledgeIncident
+      summary: Acknowledge one open incident
+      x-required-roles: [engineer, senior, admin]
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [expectedState]
+              properties:
+                expectedState: { const: open }
+      responses:
+        '200':
+          description: Updated incident
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IncidentSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+  /incidents/{incidentId}/resolution:
+    post:
+      operationId: resolveIncident
+      summary: Resolve an acknowledged incident with notes
+      x-required-roles: [senior, admin]
+      parameters:
+        - $ref: '#/components/parameters/IncidentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [expectedState, resolutionNotes]
+              properties:
+                expectedState: { const: acknowledged }
+                resolutionNotes:
+                  type: string
+                  minLength: 10
+                  maxLength: 10000
+                actualRootCauseEntityId:
+                  type: [string, 'null']
+                  maxLength: 256
+      responses:
+        '200':
+          description: Resolved incident
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IncidentSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    SiteId:
+      name: siteId
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 160 }
+    IncidentId:
+      name: incidentId
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 160 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 16, maxLength: 200 }
+  responses:
+    Unauthorized:
+      description: Authentication is absent, expired, or invalid
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: The authenticated principal cannot access the tenant resource or operation
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found in the authenticated tenant scope
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Expected state, sequence, or idempotency precondition failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    InvalidRequest:
+      description: Request failed structural or business validation
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        code: { type: string }
+        detail: { type: string }
+        traceId: { type: string }
+    Assessment:
+      type: object
+      additionalProperties: false
+      required: [operationalHealth, freshness, coverage, managementState, confidence, assessedAt, reasonCodes, evidenceIds]
+      properties:
+        operationalHealth: { enum: [healthy, degraded, unreachable, unknown] }
+        freshness: { enum: [current, stale, expired, never_observed] }
+        coverage: { enum: [full, partial, none, unsupported] }
+        managementState: { enum: [managed, passive_only, excluded, maintenance] }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        assessedAt: { type: string, format: date-time }
+        reasonCodes: { type: array, items: { type: string } }
+        evidenceIds: { type: array, items: { type: string } }
+    TopologyNode:
+      type: object
+      additionalProperties: false
+      required: [id, kind, displayName, role, identifiers, parentId, operationalCriticality, lifecycleState, assessment, tags, evidenceIds]
+      properties:
+        id: { type: string, minLength: 1 }
+        kind: { enum: [site, location, zone, subnet, vlan, device, service, application, workload, process, capability, user_group, aggregate, unknown] }
+        displayName: { type: string, minLength: 1 }
+        role: { type: string, minLength: 1 }
+        identifiers:
+          type: object
+          additionalProperties: false
+          required: [hostnames, ipAddresses, macAddresses, serialNumbers]
+          properties:
+            hostnames: { type: array, items: { type: string } }
+            ipAddresses: { type: array, items: { type: string } }
+            macAddresses: { type: array, items: { type: string } }
+            serialNumbers: { type: array, items: { type: string } }
+        parentId: { type: [string, 'null'] }
+        operationalCriticality: { type: integer, minimum: 1, maximum: 5 }
+        lifecycleState: { enum: [active, discovered, retired] }
+        assessment: { $ref: '#/components/schemas/Assessment' }
+        tags: { type: array, items: { type: string } }
+        evidenceIds: { type: array, items: { type: string } }
+    TopologySnapshot:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, snapshotId, organisation, site, generatedAt, observedAt, coverageSummary, nodes, interfaces, relationships, evidence]
+      properties:
+        schemaVersion: { const: 1.0.0 }
+        snapshotId: { type: string }
+        organisation:
+          type: object
+          additionalProperties: false
+          required: [id, name]
+          properties:
+            id: { type: string }
+            name: { type: string }
+        site:
+          type: object
+          additionalProperties: false
+          required: [id, organisationId, name]
+          properties:
+            id: { type: string }
+            organisationId: { type: string }
+            name: { type: string }
+        synthetic: { type: boolean }
+        syntheticDataNotice: { type: string }
+        generatedAt: { type: string, format: date-time }
+        observedAt: { type: string, format: date-time }
+        coverageSummary:
+          type: object
+          additionalProperties: false
+          required: [totalEntities, full, partial, none, unsupported]
+          properties:
+            totalEntities: { type: integer, minimum: 0 }
+            full: { type: integer, minimum: 0 }
+            partial: { type: integer, minimum: 0 }
+            none: { type: integer, minimum: 0 }
+            unsupported: { type: integer, minimum: 0 }
+        nodes: { type: array, items: { $ref: '#/components/schemas/TopologyNode' } }
+        interfaces: { type: array, items: { type: object } }
+        relationships: { type: array, items: { type: object } }
+        evidence: { type: array, items: { type: object } }
+    IncidentState:
+      enum: [open, acknowledged, resolved]
+    IncidentSummary:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, id, siteId, title, severity, state, detectedAt]
+      properties:
+        schemaVersion: { const: 1.0.0 }
+        id: { type: string }
+        siteId: { type: string }
+        title: { type: string }
+        severity: { enum: [information, warning, major, critical] }
+        state: { $ref: '#/components/schemas/IncidentState' }
+        detectedAt: { type: string, format: date-time }
+        acknowledgedAt: { type: [string, 'null'], format: date-time }
+        resolvedAt: { type: [string, 'null'], format: date-time }
+    IncidentAnalysis:
+      type: object
+      description: Shape is versioned with the frontend incidentAnalysisSchema; conclusions include factors and limitations.
+      additionalProperties: false
+      required: [schemaVersion, incidentId, analysedAt, probableCauseCandidates, impact, alternatePaths, safeNextChecks, limitations]
+      properties:
+        schemaVersion: { const: 1.0.0 }
+        incidentId: { type: string }
+        analysedAt: { type: string, format: date-time }
+        probableCauseCandidates: { type: array, minItems: 1, items: { type: object } }
+        impact: { type: array, items: { type: object } }
+        alternatePaths: { type: array, items: { type: object } }
+        safeNextChecks: { type: array, minItems: 1, items: { type: object } }
+        limitations: { type: array, items: { type: string } }

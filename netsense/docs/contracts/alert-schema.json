@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/alert-1.0.0.json",
+  "title": "NetSense Alert",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "alertId", "tenantId", "siteId", "severity", "state",
+    "detectedAt", "target", "summary", "knowledgeKind", "evidenceIds",
+    "confidence", "suppression", "deduplicationKey"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "alertId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "incidentId": { "type": ["string", "null"], "maxLength": 160 },
+    "tenantId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "siteId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "severity": { "enum": ["information", "warning", "major", "critical"] },
+    "state": { "enum": ["open", "acknowledged", "resolved", "suppressed"] },
+    "detectedAt": { "type": "string", "format": "date-time" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["node", "interface", "relationship", "service", "site"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "metricName": { "type": "string", "maxLength": 200 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "knowledgeKind": { "enum": ["observed", "configured", "derived", "inferred", "predicted", "unknown"] },
+    "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["band", "factors"],
+      "properties": {
+        "band": { "enum": ["high", "moderate", "low"] },
+        "factors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "summary", "effect"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1, "maxLength": 100 },
+              "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+              "effect": { "enum": ["supports", "weakens"] }
+            }
+          }
+        }
+      }
+    },
+    "suppression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suppressed"],
+      "properties": {
+        "suppressed": { "type": "boolean" },
+        "reason": { "type": ["string", "null"], "maxLength": 500 },
+        "maintenanceWindowId": { "type": ["string", "null"], "maxLength": 160 }
+      }
+    },
+    "deduplicationKey": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "observationReliability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "baselineConfidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

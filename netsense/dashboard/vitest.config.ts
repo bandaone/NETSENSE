@@ -7,8 +7,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary'],
-      include: ['src/features/topology/**/*.ts'],
-      exclude: ['src/features/topology/**/*.test.ts'],
+      include: ['src/features/{topology,incidents}/**/*.ts'],
+      exclude: ['src/features/{topology,incidents}/**/*.test.ts'],
+      thresholds: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
 });

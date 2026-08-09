@@ -1,6 +1,9 @@
 # NetSense Documentation
 
-NetSense is a network monitoring platform that gives any organisation—a mine, a hospital, a bank, a manufacturer, an office—complete visibility into their network: what is on it, how it is connected, when something is wrong, why it is wrong, and what will happen if it is not fixed.
+NetSense is being built as a cross-industry network reasoning platform. Its
+goal is to explain what is observed, how entities are connected, what may be
+wrong, what depends on it, and which evidence supports the conclusion. It does
+not claim complete visibility when monitoring coverage or evidence is partial.
 
 ## Where to Start
 
@@ -8,6 +11,7 @@ NetSense is a network monitoring platform that gives any organisation—a mine, 
 |------------|------------|
 | New to the project, want to understand what we're building | [architecture.md](architecture.md) |
 | About to write code, need to set up your environment | [developer/getting-started.md](developer/getting-started.md) |
+| Reviewing what is implemented versus planned | [product/full-product-rollout-v1.md](product/full-product-rollout-v1.md) |
 | Designing a feature, need the specification template | [rfcs/RFC-template.md](rfcs/RFC-template.md) |
 | Reviewing a major decision, need context | [adr/](adr/) |
 | Deploying NetSense for a customer | [operator/deployment-guide.md](operator/deployment-guide.md) |
@@ -19,9 +23,12 @@ NetSense is a network monitoring platform that gives any organisation—a mine, 
 
 ## Project Status
 
-**Current phase:** Phase 0 — Foundation (documentation and pre-build validation)
+**Current phase:** Atlas frontend rollout; platform and probe remain planned.
+
 **Current version:** 0.0.0 (pre-release)
-**Next milestone:** Phase 1 — gopacket capture loop validated on hardware
+
+**Next milestone:** Complete Atlas contracts and hardening, then begin the
+platform as a separate contract-driven workstream.
 
 ## Documentation Structure
 

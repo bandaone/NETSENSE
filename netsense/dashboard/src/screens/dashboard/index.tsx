@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Cable, GitBranch, Loader2, Map, PanelRight, Table2 } from 'lucide-react';
 import { OperationalContextRail } from '../../components/observe/OperationalContextRail';
 import { SituationStrip } from '../../components/observe/SituationStrip';
+import { InvestigateWorkspace } from '../../components/investigate/InvestigateWorkspace';
+import { ResolveWorkspace } from '../../components/resolve/ResolveWorkspace';
 import { NodeDetailPanel } from '../../components/topology/NodeDetailPanel';
 import { TopologyLegend } from '../../components/topology/TopologyLegend';
 import { TopologyMap } from '../../components/topology/TopologyMap';
@@ -20,6 +22,7 @@ import {
 } from '../../features/topology/rendering/cytoscapeAdapter';
 import { selectSituationSummary } from '../../features/topology/state/selectors';
 import { cn } from '../../lib/utils';
+import type { WorkspaceMode } from '../../features/workspace/types';
 
 type WorkspaceView = 'map' | 'table';
 
@@ -265,10 +268,18 @@ function ObserveWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
   );
 }
 
-export function Dashboard() {
+export function Dashboard({
+  workspace,
+}: {
+  workspace: WorkspaceMode;
+}) {
   return (
     <TopologyDataBoundary>
-      {snapshot => <ObserveWorkspace snapshot={snapshot} />}
+      {snapshot => {
+        if (workspace === 'investigate') return <InvestigateWorkspace snapshot={snapshot} />;
+        if (workspace === 'resolve') return <ResolveWorkspace />;
+        return <ObserveWorkspace snapshot={snapshot} />;
+      }}
     </TopologyDataBoundary>
   );
 }

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/event-1.0.0.json",
+  "title": "NetSense Normalized Event",
+  "description": "Versioned, tenant-scoped normalized observation contract. Payload data is referenced, not embedded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "eventId", "tenantId", "siteId", "probeId", "observedAt",
+    "normalizedAt", "entity", "metric", "source", "protocol",
+    "observationReliability", "baselineConfidence", "tags"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "tenantId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "siteId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "probeId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "rawObservedAt": { "type": "string", "format": "date-time" },
+    "normalizedAt": { "type": "string", "format": "date-time" },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stableId"],
+      "properties": {
+        "stableId": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "ipAddress": {
+          "type": "string",
+          "oneOf": [{ "format": "ipv4" }, { "format": "ipv6" }]
+        },
+        "macAddress": { "type": "string", "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$" }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "value": { "type": ["number", "string", "boolean", "null"] },
+        "unit": { "type": "string", "maxLength": 80 }
+      }
+    },
+    "source": {
+      "enum": ["packet", "lldp", "cdp", "snmp", "syslog", "netflow", "ipfix", "icmp", "modbus", "opcua", "manual", "import"]
+    },
+    "protocol": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "observationReliability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "baselineConfidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "tags": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "maxLength": 500 },
+      "propertyNames": { "minLength": 1, "maxLength": 100 }
+    },
+    "rawReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "enum": ["buffer_record", "pcap", "syslog_record", "flow_record", "collector_record"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 300 }
+      }
+    }
+  }
+}

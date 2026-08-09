@@ -1,3 +1,45 @@
+# NetSense Atlas Dashboard
+
+The implemented NetSense frontend is an evidence-led network operations
+workspace with Observe, Investigate, and Resolve workflows. It uses validated
+synthetic fixtures behind repository boundaries; it is not connected to a
+production probe or platform API yet.
+
+## Run
+
+```bash
+npm ci
+npm run dev
+```
+
+## Quality gates
+
+```bash
+npm run lint
+npm run test:run
+npm run test:coverage
+npm run test:e2e
+npm run test:a11y
+npm run build
+```
+
+The local preview routes are `/observe`, `/investigate`, and `/resolve`.
+
+## Architecture
+
+- `src/features/topology/domain` owns versioned topology semantics and graph
+  invariants.
+- `src/features/topology/layout` owns renderer-independent stored positions.
+- `src/features/incidents/domain` owns deterministic reasoning and workflow
+  rules.
+- `src/features/**/data/fixtures` contains explicitly synthetic scenarios.
+- components render domain outputs; they do not manufacture incident claims.
+
+See `../docs/product/full-product-rollout-v1.md` for the verified product
+boundary and rollout plan.
+
+<!-- Historical Vite template guidance retained below for toolchain context. -->
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

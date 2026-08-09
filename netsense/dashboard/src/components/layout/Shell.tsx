@@ -1,27 +1,36 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Eye, Network, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Eye, Network, PanelLeftClose, PanelLeftOpen, Search, ShieldCheck } from 'lucide-react';
 import { useTopologyData } from '../../features/topology/components/topologyDataContext';
 import { cn } from '../../lib/utils';
+import type { WorkspaceMode } from '../../features/workspace/types';
 
 interface NavItemProps {
   href: string;
   icon: ReactNode;
   label: string;
   collapsed: boolean;
+  active: boolean;
+  onClick: () => void;
 }
 
-function NavItem({ href, icon, label, collapsed }: NavItemProps) {
+function NavItem({ href, icon, label, collapsed, active, onClick }: NavItemProps) {
   return (
     <a
       href={href}
+      onClick={event => {
+        event.preventDefault();
+        onClick();
+      }}
       data-testid={`nav-${label.toLowerCase()}`}
       aria-label={collapsed ? label : undefined}
-      aria-current="page"
+      aria-current={active ? 'page' : undefined}
       title={collapsed ? label : undefined}
       className={cn(
         'relative mx-2 flex h-10 items-center border-l-2 text-[13px] font-medium transition-colors',
         collapsed ? 'justify-center px-2' : 'gap-3 px-3',
-        'border-[var(--color-brand-primary)] bg-[var(--color-brand-soft)] text-white',
+        active
+          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-soft)] text-white'
+          : 'border-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] hover:text-white',
       )}
     >
       <span className="flex-none" aria-hidden="true">{icon}</span>
@@ -32,11 +41,11 @@ function NavItem({ href, icon, label, collapsed }: NavItemProps) {
 
 function useCompactNavigation(): [boolean, (next: boolean) => void] {
   const [collapsed, setCollapsed] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1439px)').matches,
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1599px)').matches,
   );
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 1439px)');
+    const media = window.matchMedia('(max-width: 1599px)');
     const handleChange = (event: MediaQueryListEvent) => setCollapsed(event.matches);
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
@@ -45,7 +54,15 @@ function useCompactNavigation(): [boolean, (next: boolean) => void] {
   return [collapsed, setCollapsed];
 }
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({
+  children,
+  activeWorkspace,
+  onNavigate,
+}: {
+  children: ReactNode;
+  activeWorkspace: WorkspaceMode;
+  onNavigate: (workspace: WorkspaceMode) => void;
+}) {
   const [collapsed, setCollapsed] = useCompactNavigation();
   const { snapshot, isLoading } = useTopologyData();
 
@@ -71,8 +88,31 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
         </div>
 
-        <nav className="flex-1 py-3">
-          <NavItem href="/observe" icon={<Eye className="h-4 w-4" />} label="Observe" collapsed={collapsed} />
+        <nav className="flex-1 space-y-1 py-3">
+          <NavItem
+            href="/observe"
+            icon={<Eye className="h-4 w-4" />}
+            label="Observe"
+            collapsed={collapsed}
+            active={activeWorkspace === 'observe'}
+            onClick={() => onNavigate('observe')}
+          />
+          <NavItem
+            href="/investigate"
+            icon={<Search className="h-4 w-4" />}
+            label="Investigate"
+            collapsed={collapsed}
+            active={activeWorkspace === 'investigate'}
+            onClick={() => onNavigate('investigate')}
+          />
+          <NavItem
+            href="/resolve"
+            icon={<ShieldCheck className="h-4 w-4" />}
+            label="Resolve"
+            collapsed={collapsed}
+            active={activeWorkspace === 'resolve'}
+            onClick={() => onNavigate('resolve')}
+          />
         </nav>
 
         {!collapsed && snapshot && (

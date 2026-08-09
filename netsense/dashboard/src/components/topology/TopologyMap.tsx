@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import cytoscape, { type Core, type ElementDefinition, type StylesheetStyle } from 'cytoscape';
 import { Lock, Maximize2, Minus, Plus } from 'lucide-react';
 import {
+  isAtlasEdgeData,
   isAtlasNodeData,
+  type AtlasCytoscapeEdgeData,
   type AtlasCytoscapeNodeData,
 } from '../../features/topology/rendering/cytoscapeAdapter';
 import { cn } from '../../lib/utils';
@@ -10,7 +12,9 @@ import { cn } from '../../lib/utils';
 export interface TopologyMapProps {
   elements: ElementDefinition[];
   selectedNodeId?: string;
+  selectedRelationshipId?: string;
   onNodeClick?: (node: AtlasCytoscapeNodeData) => void;
+  onRelationshipClick?: (relationship: AtlasCytoscapeEdgeData) => void;
   onBackgroundClick?: () => void;
   className?: string;
 }
@@ -73,6 +77,47 @@ const ATLAS_STYLE_DEFINITIONS = [
     style: {
       'background-color': '#1a222c',
       'background-opacity': 0.72,
+    },
+  },
+  {
+    selector: 'node.atlas-entity[analysisState = "confirmed"]',
+    style: {
+      'border-width': 3,
+      'border-color': '#d56a6a',
+      'underlay-color': '#d56a6a',
+      'underlay-opacity': 0.12,
+      'underlay-padding': 7,
+    },
+  },
+  {
+    selector: 'node.atlas-entity[analysisState = "likely"]',
+    style: {
+      'border-width': 2.5,
+      'border-color': '#d0a05b',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[analysisState = "at_risk"]',
+    style: {
+      'border-style': 'dashed',
+      'border-color': '#d0a05b',
+    },
+  },
+  {
+    selector: 'node.atlas-entity[analysisState = "alternate"]',
+    style: {
+      'border-width': 2,
+      'border-color': '#65ad7d',
+      'underlay-color': '#65ad7d',
+      'underlay-opacity': 0.08,
+      'underlay-padding': 5,
+    },
+  },
+  {
+    selector: 'node.atlas-entity[analysisState = "unknown"]',
+    style: {
+      'border-style': 'dotted',
+      'border-color': '#8b96a3',
     },
   },
   {
@@ -201,7 +246,9 @@ function updateSemanticPresentation(cy: Core): void {
 export function TopologyMap({
   elements,
   selectedNodeId,
+  selectedRelationshipId,
   onNodeClick,
+  onRelationshipClick,
   onBackgroundClick,
   className,
 }: TopologyMapProps) {
@@ -210,13 +257,15 @@ export function TopologyMap({
   const initialElementsRef = useRef(elements);
   const fittedRef = useRef(false);
   const onNodeClickRef = useRef(onNodeClick);
+  const onRelationshipClickRef = useRef(onRelationshipClick);
   const onBackgroundClickRef = useRef(onBackgroundClick);
   const [tooltip, setTooltip] = useState<NodeTooltip>();
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
+    onRelationshipClickRef.current = onRelationshipClick;
     onBackgroundClickRef.current = onBackgroundClick;
-  }, [onBackgroundClick, onNodeClick]);
+  }, [onBackgroundClick, onNodeClick, onRelationshipClick]);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
@@ -239,6 +288,10 @@ export function TopologyMap({
     cy.on('tap', 'node.atlas-entity', event => {
       const data: unknown = event.target.data();
       if (isAtlasNodeData(data)) onNodeClickRef.current?.(data);
+    });
+    cy.on('tap', 'edge', event => {
+      const data: unknown = event.target.data();
+      if (isAtlasEdgeData(data)) onRelationshipClickRef.current?.(data);
     });
     cy.on('tap', event => {
       if (event.target === cy) onBackgroundClickRef.current?.();
@@ -316,15 +369,21 @@ export function TopologyMap({
     const cy = cyRef.current;
     if (!cy) return;
     cy.elements().removeClass('atlas-muted atlas-related');
-    cy.nodes().unselect();
+    cy.elements().unselect();
     if (selectedNodeId) {
       const selected = cy.getElementById(selectedNodeId);
       selected.select();
       const context = selected.closedNeighborhood();
       cy.elements().not(context).addClass('atlas-muted');
       context.edges().addClass('atlas-related');
+    } else if (selectedRelationshipId) {
+      const selected = cy.getElementById(selectedRelationshipId);
+      selected.select();
+      const context = selected.connectedNodes().union(selected);
+      cy.elements().not(context).addClass('atlas-muted');
+      selected.addClass('atlas-related');
     }
-  }, [selectedNodeId]);
+  }, [selectedNodeId, selectedRelationshipId]);
 
   const fitView = useCallback(() => {
     const cy = cyRef.current;

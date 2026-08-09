@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Atlas Observe, Investigate, and Resolve workspaces with responsive navigation.
+- Deterministic incident analysis with candidate factors, impact classes,
+  alternate-path detection, limitations, and safe next checks.
+- Real topology search, composable filters, node and relationship evidence inspection.
+- Guarded session-only acknowledgement, notes, and resolution workflow.
+- Versioned event, alert, topology-diff, and proposed platform API contracts.
+- Verified product rollout boundary separating implemented frontend from planned platform/probe work.
 - Complete documentation tree (architecture, requirements, UX, testing, ADRs, RFCs)
 - Functional requirements (75 FRs) and non-functional requirements (20 NFRs)
 - Requirements traceability matrix

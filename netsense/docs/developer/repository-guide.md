@@ -1,11 +1,18 @@
 # Repository Guide
 
-## Top-Level Structure
+## Current implementation
+
+The checked-in repository currently contains `dashboard/` and `docs/`. The
+dashboard is React, TypeScript, Vite, Cytoscape, and ELK with Vitest and
+Playwright verification. The remaining directories in the target structure
+below are planned and must not be treated as implemented release artifacts.
+
+## Target top-level structure
 ```
 netsense/
 ├── probe/ # Go probe binary (single binary)
 ├── platform/ # Python platform (FastAPI, Celery, NetworkX)
-├── frontend/ # React + TypeScript dashboard
+├── dashboard/ # React + TypeScript Atlas dashboard (implemented)
 ├── infra/ # Docker Compose, nginx, WireGuard configs
 ├── docs/ # All documentation
 ├── tests/ # Cross-component integration and E2E tests
@@ -30,7 +37,7 @@ netsense/
 - `api/` — FastAPI application (routers, models, schemas, websocket)
 - `migrations/` — Alembic database migrations
 
-### frontend/
+### dashboard/
 - `src/components/topology/` — Cytoscape.js wrapper
 - `src/components/metrics/` — Recharts charts
 - `src/components/replay/` — forensic replay animation
@@ -43,4 +50,3 @@ netsense/
 - `rfcs/` — Engineering Specifications
 - `product/` — requirements, UX, testing
 - `user/`, `operator/`, `developer/`, `runbooks/`
-

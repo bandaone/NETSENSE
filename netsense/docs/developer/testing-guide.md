@@ -3,12 +3,14 @@
 ## Test Levels
 | Level | Command | Location | Runtime |
 |-------|---------|----------|---------|
-| Unit (Go) | `cd probe && go test ./...` | `probe/**/*_test.go` | <10s |
-| Unit (Python) | `cd platform && poetry run pytest` | `platform/tests/unit/` | <30s |
-| Unit (TS) | `cd frontend && npm test` | `*.test.ts(x)` | <10s |
-| Integration | `make integration-test` | `tests/integration/` | ~5min |
-| E2E | `make e2e-test` | `tests/e2e/` | ~10min |
-| Load | `make load-test` | `tests/load/` | variable |
+| Unit (TS) | `cd dashboard && npm run test:run` | `dashboard/src/**/*.test.ts` | <10s |
+| Coverage (TS) | `cd dashboard && npm run test:coverage` | domain and adapter modules | <15s |
+| E2E | `cd dashboard && npm run test:e2e` | `dashboard/e2e/` | ~1min |
+| Accessibility | `cd dashboard && npm run test:a11y` | axe through Playwright | ~20s |
+| Production build | `cd dashboard && npm run build` | TypeScript + Vite | <30s |
+
+Go, Python, integration, and load-test commands will be added with those
+workstreams. They are not currently runnable in this repository.
 
 ## Writing Tests
 - Go: use `testing` + `testify/assert`. Mock with `testify/mock`.
@@ -17,21 +19,15 @@
 
 ## Running Specific Tests
 ```bash
-# Go: single test
-cd probe && go test -run TestHoltWinters_Predict ./internal/baseline/
-
-# Python: single file
-cd platform && poetry run pytest tests/unit/test_fault_localizer.py
-
 # Frontend: single test
-cd frontend && npm test -- -t "topology node changes color"
+cd dashboard && npm test -- -t "finds a healthy alternate path"
 ```
 
 ## Coverage
-`make coverage`        # generates HTML reports for all components
+`cd dashboard && npm run test:coverage`
 
-Minimum: 80% for Go and Python, 70% for TypeScript.
+The current frontend gate is 80% for statements, branches, functions, and
+lines in the included domain/adapter modules.
 
-CI Integration
-All tests run automatically on every PR and push to main. Coverage thresholds are enforced.
-
+CI automation is not checked in yet. Local gates are mandatory until the CI
+workflow exists; documentation must not describe them as remotely enforced.

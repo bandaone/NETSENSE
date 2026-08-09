@@ -1,9 +1,9 @@
 import type {
-  NetworkInterface,
   TopologyNode,
   TopologyRelationship,
   TopologySnapshot,
 } from '../domain/types';
+import { resolveEndpointNodeId } from '../domain/graph';
 import type { TopologyLens } from '../layout/types';
 
 export interface AtlasLensDefinition {
@@ -88,15 +88,6 @@ const DEPENDENCY_RELATIONSHIPS = new Set<TopologyRelationship['relationshipType'
   'redundancy_peer',
 ]);
 
-export function relationshipEndpointNodeId(
-  endpoint: TopologyRelationship['source'],
-  interfaces: readonly NetworkInterface[],
-): string | undefined {
-  if (endpoint.nodeId) return endpoint.nodeId;
-  if (!endpoint.interfaceId) return undefined;
-  return interfaces.find(networkInterface => networkInterface.id === endpoint.interfaceId)?.deviceId;
-}
-
 function nodeAllowed(node: TopologyNode, lens: ActiveAtlasLens): boolean {
   if (lens === 'physical') return PHYSICAL_KINDS.has(node.kind);
   if (lens === 'dependency') return DEPENDENCY_KINDS.has(node.kind);
@@ -129,8 +120,8 @@ export function projectSnapshotForLens(
 
   const candidateRelationships = snapshot.relationships.filter(relationship => {
     if (!relationshipAllowed(relationship, lens)) return false;
-    const sourceId = relationshipEndpointNodeId(relationship.source, snapshot.interfaces);
-    const targetId = relationshipEndpointNodeId(relationship.target, snapshot.interfaces);
+    const sourceId = resolveEndpointNodeId(relationship.source, snapshot.interfaces);
+    const targetId = resolveEndpointNodeId(relationship.target, snapshot.interfaces);
     return Boolean(sourceId && targetId && candidateIds.has(sourceId) && candidateIds.has(targetId));
   });
 
@@ -150,15 +141,15 @@ export function projectSnapshotForLens(
   if (lens === 'dependency') {
     for (const relationship of candidateRelationships) {
       if (relationship.relationshipType === 'redundancy_peer') continue;
-      const sourceId = relationshipEndpointNodeId(relationship.source, snapshot.interfaces);
-      const targetId = relationshipEndpointNodeId(relationship.target, snapshot.interfaces);
+      const sourceId = resolveEndpointNodeId(relationship.source, snapshot.interfaces);
+      const targetId = resolveEndpointNodeId(relationship.target, snapshot.interfaces);
       if (sourceId) visibleIds.add(sourceId);
       if (targetId) visibleIds.add(targetId);
     }
     for (const relationship of candidateRelationships) {
       if (relationship.relationshipType !== 'redundancy_peer') continue;
-      const sourceId = relationshipEndpointNodeId(relationship.source, snapshot.interfaces);
-      const targetId = relationshipEndpointNodeId(relationship.target, snapshot.interfaces);
+      const sourceId = resolveEndpointNodeId(relationship.source, snapshot.interfaces);
+      const targetId = resolveEndpointNodeId(relationship.target, snapshot.interfaces);
       if (sourceId && targetId && (visibleIds.has(sourceId) || visibleIds.has(targetId))) {
         visibleIds.add(sourceId);
         visibleIds.add(targetId);
@@ -178,8 +169,8 @@ export function projectSnapshotForLens(
   const nodes = snapshot.nodes.filter(node => visibleIds.has(node.id));
   const nodeIds = new Set(nodes.map(node => node.id));
   const relationships = candidateRelationships.filter(relationship => {
-    const sourceId = relationshipEndpointNodeId(relationship.source, snapshot.interfaces);
-    const targetId = relationshipEndpointNodeId(relationship.target, snapshot.interfaces);
+    const sourceId = resolveEndpointNodeId(relationship.source, snapshot.interfaces);
+    const targetId = resolveEndpointNodeId(relationship.target, snapshot.interfaces);
     return Boolean(sourceId && targetId && nodeIds.has(sourceId) && nodeIds.has(targetId));
   });
   const interfaces = snapshot.interfaces.filter(networkInterface =>

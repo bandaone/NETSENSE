@@ -108,21 +108,36 @@ const CORE_ZONE = 'zone:aster:core-infrastructure';
 const ACCESS_ZONE = 'zone:aster:staff-access';
 const SERVICES_ZONE = 'zone:aster:digital-services';
 
-const FIREWALL = 'device:aster:perimeter-firewall';
-const CORE_01 = 'device:aster:core-01';
-const CORE_02 = 'device:aster:core-02';
-const ACCESS_01 = 'device:aster:access-01';
-const COMPUTE = 'device:aster:compute-cluster';
+export const ASTER_FIREWALL_ID = 'device:aster:perimeter-firewall';
+export const ASTER_CORE_01_ID = 'device:aster:core-01';
+export const ASTER_CORE_02_ID = 'device:aster:core-02';
+export const ASTER_ACCESS_01_ID = 'device:aster:access-01';
+export const ASTER_COMPUTE_ID = 'device:aster:compute-cluster';
 const PROBE = 'device:aster:monitoring-probe';
-const DIRECTORY = 'service:aster:directory';
-const IDENTITY = 'application:aster:identity';
-const COLLABORATION = 'application:aster:collaboration';
-const FINANCE = 'application:aster:finance';
-const CUSTOMER_PORTAL = 'application:aster:customer-portal';
-const STAFF_ACCESS = 'capability:aster:staff-access';
-const FINANCE_OPERATIONS = 'capability:aster:finance-operations';
-const CUSTOMER_SERVICES = 'capability:aster:customer-services';
-const WORKFORCE = 'user-group:aster:workforce';
+export const ASTER_DIRECTORY_ID = 'service:aster:directory';
+export const ASTER_IDENTITY_ID = 'application:aster:identity';
+export const ASTER_COLLABORATION_ID = 'application:aster:collaboration';
+export const ASTER_FINANCE_ID = 'application:aster:finance';
+export const ASTER_CUSTOMER_PORTAL_ID = 'application:aster:customer-portal';
+export const ASTER_STAFF_ACCESS_ID = 'capability:aster:staff-access';
+export const ASTER_FINANCE_OPERATIONS_ID = 'capability:aster:finance-operations';
+export const ASTER_CUSTOMER_SERVICES_ID = 'capability:aster:customer-services';
+export const ASTER_WORKFORCE_ID = 'user-group:aster:workforce';
+
+const FIREWALL = ASTER_FIREWALL_ID;
+const CORE_01 = ASTER_CORE_01_ID;
+const CORE_02 = ASTER_CORE_02_ID;
+const ACCESS_01 = ASTER_ACCESS_01_ID;
+const COMPUTE = ASTER_COMPUTE_ID;
+const DIRECTORY = ASTER_DIRECTORY_ID;
+const IDENTITY = ASTER_IDENTITY_ID;
+const COLLABORATION = ASTER_COLLABORATION_ID;
+const FINANCE = ASTER_FINANCE_ID;
+const CUSTOMER_PORTAL = ASTER_CUSTOMER_PORTAL_ID;
+const STAFF_ACCESS = ASTER_STAFF_ACCESS_ID;
+const FINANCE_OPERATIONS = ASTER_FINANCE_OPERATIONS_ID;
+const CUSTOMER_SERVICES = ASTER_CUSTOMER_SERVICES_ID;
+const WORKFORCE = ASTER_WORKFORCE_ID;
 
 const nodes: TopologyNode[] = [
   node(EDGE_ZONE, 'zone', 'Network Edge', 'security_zone', null, 5),
@@ -154,7 +169,9 @@ const interfaces: NetworkInterface[] = [
   networkInterface('interface:aster:core-01:peer', CORE_01, 'Te1/1/48', 48),
   networkInterface('interface:aster:core-02:peer', CORE_02, 'Te1/1/48', 48),
   networkInterface('interface:aster:core-01:access', CORE_01, 'Te1/1/20', 20),
-  networkInterface('interface:aster:access:core', ACCESS_01, 'Te1/0/48', 48),
+  networkInterface('interface:aster:access:core-01', ACCESS_01, 'Te1/0/47', 47),
+  networkInterface('interface:aster:core-02:access', CORE_02, 'Te1/1/20', 20),
+  networkInterface('interface:aster:access:core-02', ACCESS_01, 'Te1/0/48', 48),
   networkInterface('interface:aster:core-02:compute', CORE_02, 'Te1/1/21', 21),
   networkInterface('interface:aster:compute:core', COMPUTE, 'bond0', 1),
 ];
@@ -163,7 +180,8 @@ const relationships: TopologyRelationship[] = [
   relationship('relationship:aster:firewall:core-01', 'physical_adjacency', { interfaceId: 'interface:aster:firewall:core-01' }, { interfaceId: 'interface:aster:core-01:firewall' }, 'bidirectional'),
   relationship('relationship:aster:firewall:core-02', 'physical_adjacency', { interfaceId: 'interface:aster:firewall:core-02' }, { interfaceId: 'interface:aster:core-02:firewall' }, 'bidirectional'),
   relationship('relationship:aster:core-peer', 'physical_adjacency', { interfaceId: 'interface:aster:core-01:peer' }, { interfaceId: 'interface:aster:core-02:peer' }, 'bidirectional'),
-  relationship('relationship:aster:core:access', 'physical_adjacency', { interfaceId: 'interface:aster:core-01:access' }, { interfaceId: 'interface:aster:access:core' }, 'bidirectional'),
+  relationship('relationship:aster:core-01:access', 'physical_adjacency', { interfaceId: 'interface:aster:core-01:access' }, { interfaceId: 'interface:aster:access:core-01' }, 'bidirectional'),
+  relationship('relationship:aster:core-02:access', 'physical_adjacency', { interfaceId: 'interface:aster:core-02:access' }, { interfaceId: 'interface:aster:access:core-02' }, 'bidirectional'),
   relationship('relationship:aster:core:compute', 'physical_adjacency', { interfaceId: 'interface:aster:core-02:compute' }, { interfaceId: 'interface:aster:compute:core' }, 'bidirectional'),
   relationship('relationship:aster:core-redundancy', 'redundancy_peer', { nodeId: CORE_01 }, { nodeId: CORE_02 }, 'bidirectional'),
   relationship('relationship:aster:compute:directory', 'hosts', { nodeId: COMPUTE }, { nodeId: DIRECTORY }),

@@ -1,5 +1,11 @@
 # NetSense Architecture
 
+> **Implementation status (2026-08-09):** The repository currently implements
+> the React Atlas frontend and contract documentation. The probe, platform,
+> storage, and deployment components below are the approved target
+> architecture, not shipped code. See
+> `docs/product/full-product-rollout-v1.md` for the verified rollout boundary.
+
 NetSense is designed as a passive network monitoring platform for converged IT and OT environments. It uses a lightweight probe to capture mirrored traffic, a platform service to normalise and store events, and a web dashboard for visualization and incident management.
 
 ## Key Components
@@ -24,4 +30,3 @@ NetSense is designed as a passive network monitoring platform for converged IT a
 - **Confidence-weighted baselines:** Alerts from day zero with uncertainty metadata.
 - **Encrypted forensics:** Triggered PCAPs encrypted at rest and access-controlled.
 - **Modular plugin architecture:** New protocol support added through collector plugins.
-

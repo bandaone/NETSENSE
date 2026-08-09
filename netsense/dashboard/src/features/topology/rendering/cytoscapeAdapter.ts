@@ -55,6 +55,7 @@ export interface AtlasCytoscapeNodeData {
   width: number;
   height: number;
   entityGlyph: string;
+  analysisState: 'none' | 'confirmed' | 'likely' | 'at_risk' | 'alternate' | 'unknown';
   parent?: string;
 }
 
@@ -127,6 +128,7 @@ function statusPrefix(node: TopologyNode): string {
 export function projectSnapshotToCytoscape(
   snapshot: TopologySnapshot,
   layout: LayoutProfile | undefined,
+  analysisStateByNodeId: Readonly<Record<string, AtlasCytoscapeNodeData['analysisState']>> = {},
 ): ElementDefinition[] {
   const interfaceToDevice = new Map(
     snapshot.interfaces.map(networkInterface => [networkInterface.id, networkInterface.deviceId]),
@@ -175,6 +177,7 @@ export function projectSnapshotToCytoscape(
       width: dimensions.width,
       height: dimensions.height,
       entityGlyph: glyph,
+      analysisState: analysisStateByNodeId[node.id] ?? 'none',
       ...(node.parentId ? { parent: node.parentId } : {}),
     };
     return {
@@ -233,4 +236,10 @@ export function isAtlasNodeData(value: unknown): value is AtlasCytoscapeNodeData
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<AtlasCytoscapeNodeData>;
   return typeof candidate.id === 'string' && typeof candidate.displayName === 'string';
+}
+
+export function isAtlasEdgeData(value: unknown): value is AtlasCytoscapeEdgeData {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<AtlasCytoscapeEdgeData>;
+  return typeof candidate.id === 'string' && typeof candidate.relationshipType === 'string';
 }

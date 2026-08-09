@@ -10,34 +10,33 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/netsense/netsense.git
-cd netsense
-make dev
+cd dashboard
+npm ci
+npm run dev
 ```
 
-This starts: TimescaleDB, Redis, and WireGuard (Docker), Probe (Go, hot-reload via `air`), Platform API (Python, hot-reload via `uvicorn --reload`), Frontend (React, hot-reload via Vite).
+This starts the currently implemented Atlas dashboard. TimescaleDB, Redis,
+WireGuard, the Go probe, and the Python platform are target-architecture
+components and are not present yet.
 
 Open `http://localhost:5173` for the dashboard.
 
 ### Running Tests
 
 ```bash
-make test                 # All unit tests
-make integration-test     # Integration tests (requires Docker)
-make test-probe           # Probe only
-make test-platform        # Platform only
-make test-frontend        # Frontend only
+npm run lint
+npm run test:run
+npm run test:coverage
+npm run test:e2e
+npm run test:a11y
+npm run build
 ```
 
-### Seeding Data
-
-```bash
-make seed                 # Populate with 50 devices, 14 days of metrics
-```
+The dashboard loads deterministic, validated synthetic fixtures. There is no
+database seed command until the platform workstream is implemented.
 
 ### Project Structure
 See `repository-guide.md`.
 
-### First Task
-Pick a "good first issue" from the issue tracker. Recommended: add a test for an uncovered function.
-
+Before adding a subsystem, review `docs/product/full-product-rollout-v1.md` and
+create a bounded RFC/ADR where the existing decisions do not cover it.
