@@ -1,9 +1,10 @@
 # NetSense Architecture
 
 > **Implementation status (2026-08-09):** The repository currently implements
-> the React Atlas frontend and contract documentation. The probe, platform,
-> storage, and deployment components below are the approved target
-> architecture, not shipped code. See
+> the React Atlas frontend, portable contracts, and an authenticated Python API
+> kernel with a test/development in-memory repository. The probe, durable
+> storage, event processing, streaming, and deployment components below remain
+> approved target architecture, not shipped code. See
 > `docs/product/full-product-rollout-v1.md` for the verified rollout boundary.
 
 NetSense is designed as a passive network monitoring platform for converged IT and OT environments. It uses a lightweight probe to capture mirrored traffic, a platform service to normalise and store events, and a web dashboard for visualization and incident management.
@@ -11,7 +12,9 @@ NetSense is designed as a passive network monitoring platform for converged IT a
 ## Key Components
 
 - **Probe:** Go-based single binary that captures traffic via libpcap, normalises protocol data, applies baselines, and forwards events to the platform.
-- **Platform:** Python/TimescaleDB backend that stores devices, metrics, incidents, and audit logs.
+- **Platform:** Python API kernel currently validates contracts, JWT identity,
+  tenant scope, roles, and incident transitions. PostgreSQL/TimescaleDB storage,
+  event processing, and immutable audit persistence remain planned.
 - **Frontend:** React dashboard with topology, incident logs, alert feed, and forensic replay.
 - **Storage:** TimescaleDB hypertables for metrics and PostgreSQL relational tables for devices, users, incidents, and configuration.
 - **Communication:** WireGuard secures probe-to-platform traffic, with role-based API access for users.

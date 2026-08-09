@@ -3,10 +3,11 @@ info:
   title: NetSense Platform API
   version: 1.0.0
   description: >-
-    Contract-ready tenant-scoped API for Atlas topology and incident workflows.
-    The schemas are generated from the validated TypeScript domain models. This
-    contract does not imply that the platform service is implemented.
-x-netsense-status: contract-ready-no-service
+    Tenant-scoped API for Atlas topology and incident workflows. The schemas
+    are generated from the validated TypeScript domain models and consumed by
+    the authenticated Python API kernel. Production persistence, database RLS,
+    rate limiting, and WebSocket streaming are not implemented yet.
+x-netsense-status: api-kernel-implemented-persistence-planned
 servers:
   - url: https://{host}/api/v1
     variables:

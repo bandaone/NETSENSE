@@ -9,8 +9,9 @@
 ## Implemented product truth
 
 The repository currently contains a production-built React/TypeScript Atlas
-frontend and its product documentation. The Go probe, Python platform,
-TimescaleDB migrations, deployment infrastructure, generated API client, and
+frontend, portable contracts, product documentation, and the first bounded
+Python platform slice. The Go probe, TimescaleDB migrations, production
+repository, deployment infrastructure, generated API client, and
 cross-component test harness described by `docs/developer/repository-guide.md`
 do not yet exist in this repository.
 
@@ -28,20 +29,28 @@ fixture adapters implement explicit tenant-scoped repository boundaries.
 Stream classification rejects cross-scope updates, ignores duplicates, and
 requires a bounded refresh after sequence gaps or snapshot mismatches.
 
-The following capabilities are not implemented yet: a live HTTP/WebSocket
-adapter, platform service, database and migrations, authentication/RBAC,
-database tenant isolation, durable workflow state, passive probe, alert
-delivery, packet forensics, production deployment, and live Layer 2, Layer 3,
-Flow, Change, and Discovery evidence inputs.
+The platform API kernel now provides authenticated HTTP topology and incident
+reads plus incident acknowledgement, notes, and resolution. It verifies RS256
+JWT issuer, audience, lifetime, tenant, subject, and role claims; derives tenant
+scope from the token; validates exact portable request and response contracts;
+enforces non-disclosing resource scope; and applies idempotency and
+expected-state rules through dependency-injected repository ports. Its
+in-memory repository is for deterministic tests and local development only.
+
+The following capabilities are not implemented yet: a live frontend HTTP
+adapter, WebSocket service, database and migrations, database tenant RLS,
+durable workflow and immutable audit storage, event ingestion/processing,
+passive probe, alert delivery, packet forensics, production deployment, and
+live Layer 2, Layer 3, Flow, Change, and Discovery evidence inputs.
 
 ## Product boundaries
 
 The current rollout completes Atlas as a trustworthy frontend reference
-implementation. It does not claim that collection, persistence,
-authentication, tenant isolation, alert delivery, or packet forensics exist.
-Those capabilities require separate probe and platform workstreams with their
-own threat models, migration plans, performance harnesses, and deployment
-reviews.
+implementation and establishes an authenticated platform boundary. It does
+not claim that collection, durable persistence, database-enforced tenant
+isolation, alert delivery, or packet forensics exist. Those capabilities
+require separate probe and persistence workstreams with their own threat
+models, migration plans, performance harnesses, and deployment reviews.
 
 No presentation component may manufacture operational conclusions. Incident
 views consume only validated scenario inputs and deterministic analysis
@@ -81,7 +90,7 @@ are session-only.
 | Layout worker | Show a recoverable map error; preserve the accessible table and prior stored layout. |
 | Analysis engine | Return explicit limitations and unknown classifications when evidence is incomplete. |
 | Session actions | Prevent duplicate acknowledgement/resolution transitions and retain an ordered local audit trail. |
-| Future API | Use expiring authentication, role checks, tenant context, database RLS, idempotency keys, and structured non-disclosing errors. |
+| Platform API | Verify expiring tokens, derive tenant context from identity, enforce roles and idempotency, validate responses, and return structured non-disclosing errors. Database RLS remains mandatory before production persistence. |
 | Future WebSocket | Authenticate the connection, validate every diff, reject stale sequence numbers, and recover through a bounded snapshot refresh. |
 | Future probe | Remain passive by default, isolate collectors, bound local storage, encrypt forensics before disk writes, and never expose OT write paths. |
 
@@ -128,34 +137,39 @@ are session-only.
 - Complete responsive, keyboard, axe, visual regression, performance, error,
   and reduced-motion verification.
 
-### R6 — Platform and probe
+### R6 — Platform and probe — API kernel in progress
 
 - Start only after the contracts and threat model are reviewed.
-- Deliver the Python platform, PostgreSQL/TimescaleDB migrations, tenant RLS,
-  authentication/RBAC, event ingestion, topology query/diff streaming, and
-  incident persistence as independently testable slices.
+- The first Python slice delivers authentication/RBAC, tenant-scoped HTTP
+  topology queries, incident reads and mutations, contract conformance, and
+  repository ports with an isolated behavior suite.
+- Next deliver PostgreSQL/TimescaleDB migrations, tenant RLS, transactional
+  incident and idempotency storage, and immutable audit records before any
+  production runtime composition.
+- Then deliver event ingestion and authenticated topology-diff streaming as
+  independently testable slices.
 - Deliver the Go probe capture/normalisation/buffer path before optional active
   collectors. Hardware and 100 Mbps requirements require target-device tests;
   they cannot be proven in browser CI.
 
 ## Current engineering risks
 
-- No Go or Python consumer validates the generated portable schemas yet, so
-  cross-language parity is not proven.
+- Python now validates the same generated portable schemas as TypeScript. Go
+  conformance and shared cross-language fixture execution remain unproven.
 - The current main application chunk is approximately 848 kB minified and the
   ELK worker approximately 1.6 MB; route and worker loading need measurement
   and code splitting before scale hardening.
-- Browser-local workflow state is not durable, shareable, or auditable across
-  users. The UI must label this limitation until R6.
-- The OpenAPI contract is ready for implementation but no authenticated
-  service exists; frontend controls and repository scope checks are not
-  substitutes for API authorization or database RLS.
+- Browser-local workflow state is still not connected to the platform kernel
+  and remains non-durable. The UI must keep its session-only label until the
+  live adapter and production repository are complete.
+- API authorization is implemented, but the in-memory adapter is not a
+  substitute for transactional persistence, immutable audit records, or
+  PostgreSQL RLS. No production server composition is exported yet.
 
 ## Release gates
 
-Each bounded slice must pass dependency integrity, TypeScript strict build,
-ESLint with zero warnings, unit tests, coverage, Playwright workflows, axe,
-and the production build. A separate post-implementation review records
-correctness, complexity, readability, cohesion, duplication, error handling,
-security, test coverage, architectural consistency, scale impact, and known
-debt.
+Each bounded slice must pass its applicable dependency integrity, strict
+build/type, lint, unit, coverage, integration, accessibility, and production
+build gates. A separate post-implementation review records correctness,
+complexity, readability, cohesion, duplication, error handling, security,
+test coverage, architectural consistency, scale impact, and known debt.

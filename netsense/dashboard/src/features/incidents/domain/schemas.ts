@@ -120,6 +120,8 @@ export const safeCheckSchema = z.object({
 export const incidentAnalysisSchema = z.object({
   schemaVersion: z.literal(INCIDENT_SCHEMA_VERSION),
   incidentId: z.string().min(1),
+  tenantId: z.string().min(1),
+  siteId: z.string().min(1),
   analysedAt: z.string().datetime(),
   probableCauseCandidates: z.array(rootCauseCandidateSchema).min(1),
   impact: z.array(impactAssessmentSchema),

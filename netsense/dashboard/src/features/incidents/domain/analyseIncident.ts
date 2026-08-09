@@ -357,6 +357,8 @@ export function analyseIncident(input: unknown): IncidentAnalysis {
   const result: IncidentAnalysis = {
     schemaVersion: '1.0.0',
     incidentId: scenario.incident.id,
+    tenantId: scenario.incident.tenantId,
+    siteId: scenario.incident.siteId,
     analysedAt: scenario.analysedAt,
     probableCauseCandidates: candidates,
     impact: classifyImpact(scenario, candidates[0], alternatePaths),

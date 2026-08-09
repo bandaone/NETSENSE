@@ -15,6 +15,11 @@ describe('analyseIncident', () => {
   it('ranks an earlier shared dependency from explicit observations', () => {
     const analysis = analyseIncident(asterServiceDependencyIncidentScenario);
 
+    expect(analysis).toMatchObject({
+      incidentId: asterServiceDependencyIncidentScenario.incident.id,
+      tenantId: asterServiceDependencyIncidentScenario.incident.tenantId,
+      siteId: asterServiceDependencyIncidentScenario.incident.siteId,
+    });
     expect(analysis.probableCauseCandidates[0]).toMatchObject({
       target: { kind: 'node', id: ASTER_COMPUTE_ID },
       rank: 1,

@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   snapshot-mismatch, and cross-scope cases.
 - Versioned event, alert, generated topology/incident, and contract-ready
   platform API definitions.
+- Authenticated FastAPI kernel with RS256 JWT validation, token-derived tenant
+  scope, role-gated incident workflows, exact response validation, safe RFC
+  7807 failures, and dependency-injected repository ports.
+- Concurrency-safe development repository with expected-state mutations and
+  idempotent replay, plus 28 branch-aware platform tests above the 85% gate.
+- Tenant and site identity in incident-analysis responses so the API can reject
+  a validly shaped but mis-scoped repository result before disclosure.
+- Cryptography-backed PyJWT verification replacing the advisory-affected
+  `python-jose`/`ecdsa` dependency path, with patched test and build tooling.
 - Verified product rollout boundary separating implemented frontend from planned platform/probe work.
 - Complete documentation tree (architecture, requirements, UX, testing, ADRs, RFCs)
 - Functional requirements (75 FRs) and non-functional requirements (20 NFRs)

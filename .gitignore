@@ -8,6 +8,14 @@
 **/playwright-report/
 **/test-results/
 **/.vite/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/.coverage
+**/*.egg-info/
+**/*.py[cod]
 
 # Environment and secrets
 **/.env

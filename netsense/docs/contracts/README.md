@@ -1,10 +1,12 @@
 # NetSense contract boundary
 
-Status: contract-ready; no platform service or probe is implemented
+Status: consumed by the authenticated platform API kernel; no production
+persistence, topology stream, ingestion path, or probe is implemented
 
 The JSON Schemas in this directory are generated from the same strict Zod
 schemas used at the dashboard repository boundaries. They are the portable
-contract for future Go, Python, database-ingestion, and TypeScript consumers.
+contract for Python and TypeScript consumers and the future Go and
+database-ingestion consumers.
 
 ## Authority and generation
 
@@ -13,6 +15,9 @@ contract for future Go, Python, database-ingestion, and TypeScript consumers.
   Draft 2020-12 documents.
 - `openapi.yaml` references those generated documents instead of maintaining
   permissive duplicate object shapes.
+- `platform/src/netsense_platform/contracts.py` validates API inputs and
+  outputs against those same artifacts and then enforces cross-object graph
+  and incident invariants.
 - Generated JSON files must not be hand-edited.
 
 Run:

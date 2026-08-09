@@ -13,6 +13,14 @@
       "type": "string",
       "minLength": 1
     },
+    "tenantId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "siteId": {
+      "type": "string",
+      "minLength": 1
+    },
     "analysedAt": {
       "type": "string",
       "format": "date-time",
@@ -145,6 +153,8 @@
   "required": [
     "schemaVersion",
     "incidentId",
+    "tenantId",
+    "siteId",
     "analysedAt",
     "probableCauseCandidates",
     "impact",

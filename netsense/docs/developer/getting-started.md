@@ -15,9 +15,10 @@ npm ci
 npm run dev
 ```
 
-This starts the currently implemented Atlas dashboard. TimescaleDB, Redis,
-WireGuard, the Go probe, and the Python platform are target-architecture
-components and are not present yet.
+This starts the implemented Atlas dashboard. TimescaleDB, Redis, WireGuard,
+and the Go probe are target-architecture components and are not present yet.
+The Python platform API kernel is separately testable but deliberately has no
+production runtime composition until a durable repository is available.
 
 Open `http://localhost:5173` for the dashboard.
 
@@ -32,8 +33,22 @@ npm run test:a11y
 npm run build
 ```
 
-The dashboard loads deterministic, validated synthetic fixtures. There is no
-database seed command until the platform workstream is implemented.
+Verify the Python API kernel from its exact development lock:
+
+```bash
+cd platform
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.lock
+.venv/bin/pip install --no-build-isolation --no-deps -e .
+.venv/bin/pip check
+.venv/bin/ruff format --check .
+.venv/bin/ruff check .
+.venv/bin/pytest
+```
+
+The dashboard and platform tests load deterministic, validated synthetic
+fixtures. There is no database seed command until the persistence workstream
+is implemented.
 
 ### Project Structure
 See `repository-guide.md`.

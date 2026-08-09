@@ -2,16 +2,19 @@
 
 ## Current implementation
 
-The checked-in repository currently contains `dashboard/` and `docs/`. The
+The checked-in repository contains `dashboard/`, `platform/`, and `docs/`. The
 dashboard is React, TypeScript, Vite, Cytoscape, and ELK with Vitest and
-Playwright verification. The remaining directories in the target structure
-below are planned and must not be treated as implemented release artifacts.
+Playwright verification. The platform is an authenticated, tenant-scoped
+FastAPI kernel with repository ports and a development-only in-memory adapter.
+The remaining directories and the production persistence portions of the
+target structure below are planned and must not be treated as implemented
+release artifacts.
 
 ## Target top-level structure
 ```
 netsense/
 ├── probe/ # Go probe binary (single binary)
-├── platform/ # Python platform (FastAPI, Celery, NetworkX)
+├── platform/ # Python FastAPI kernel (implemented; production storage planned)
 ├── dashboard/ # React + TypeScript Atlas dashboard (implemented)
 ├── infra/ # Docker Compose, nginx, WireGuard configs
 ├── docs/ # All documentation
@@ -33,9 +36,15 @@ netsense/
 - `pkg/event/` — shared Event struct (the contract)
 
 ### platform/
-- `processor/` — background tasks (topology, fault, memory)
-- `api/` — FastAPI application (routers, models, schemas, websocket)
-- `migrations/` — Alembic database migrations
+- `src/netsense_platform/application.py` — dependency-injected FastAPI routes
+- `src/netsense_platform/auth.py` — RS256 JWT and role enforcement
+- `src/netsense_platform/contracts.py` — generated-schema and graph invariants
+- `src/netsense_platform/repositories.py` — topology and incident ports
+- `src/netsense_platform/memory_repository.py` — test/development adapter only
+- `tests/` — API, authentication, contract, isolation, and concurrency tests
+
+The platform does not yet contain a production repository, database
+migrations, background processors, WebSockets, or probe ingestion.
 
 ### dashboard/
 - `src/components/topology/` — Cytoscape.js wrapper

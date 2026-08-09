@@ -23,13 +23,14 @@ not claim complete visibility when monitoring coverage or evidence is partial.
 
 ## Project Status
 
-**Current phase:** Atlas frontend rollout; platform and probe remain planned.
+**Current phase:** Atlas frontend rollout plus the first authenticated platform
+API slice; production persistence and the probe remain planned.
 
 **Current version:** 0.0.0 (pre-release)
 
-**Next milestone:** Implement authenticated HTTP/WebSocket adapters and
-cross-language contract conformance, then begin the platform as a separate
-contract-driven workstream.
+**Next milestone:** Add PostgreSQL migrations, transaction-backed repositories,
+tenant RLS, immutable audit records, and a database integration harness. Live
+topology streaming and the passive probe follow those trust boundaries.
 
 ## Documentation Structure
 

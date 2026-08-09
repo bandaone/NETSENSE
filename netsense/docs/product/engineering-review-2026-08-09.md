@@ -1,5 +1,10 @@
 # NetSense Atlas Engineering Review — 2026-08-09
 
+> **Later R6 update:** The authenticated Python API kernel was implemented
+> after this frontend review. Its separate acceptance record is
+> `platform-engineering-review-2026-08-09.md`. Statements below about the
+> platform being absent describe the frontend review boundary at that time.
+
 **Review scope:** Observe, Investigate, Resolve, deterministic incident
 reasoning, incident workflow, topology search/filtering, relationship
 inspection, calibrated Operations Dark and Daylight environments, exact
