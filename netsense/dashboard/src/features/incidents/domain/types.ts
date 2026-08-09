@@ -10,6 +10,7 @@ import {
   incidentScenarioSchema,
   incidentSeveritySchema,
   incidentStateSchema,
+  incidentSummarySchema,
   incidentTargetSchema,
   rootCauseCandidateSchema,
   safeCheckSchema,
@@ -18,6 +19,7 @@ import {
 
 export type IncidentSeverity = z.infer<typeof incidentSeveritySchema>;
 export type IncidentState = z.infer<typeof incidentStateSchema>;
+export type IncidentSummary = z.infer<typeof incidentSummarySchema>;
 export type IncidentTarget = z.infer<typeof incidentTargetSchema>;
 export type SymptomKind = z.infer<typeof symptomKindSchema>;
 export type IncidentObservation = z.infer<typeof incidentObservationSchema>;

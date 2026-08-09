@@ -1,0 +1,843 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/topology-snapshot-schema.json",
+  "title": "NetSense Topology Snapshot",
+  "description": "Validated tenant-scoped topology state without renderer positions.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "snapshotId": {
+          "$ref": "#/$defs/__schema1"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/__schema2"
+        },
+        "organisation": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "site": {
+          "$ref": "#/$defs/__schema4"
+        },
+        "generatedAt": {
+          "$ref": "#/$defs/__schema5"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/__schema6"
+        },
+        "coverageSummary": {
+          "$ref": "#/$defs/__schema7"
+        },
+        "nodes": {
+          "$ref": "#/$defs/__schema8"
+        },
+        "interfaces": {
+          "$ref": "#/$defs/__schema9"
+        },
+        "relationships": {
+          "$ref": "#/$defs/__schema10"
+        },
+        "evidence": {
+          "$ref": "#/$defs/__schema12"
+        },
+        "synthetic": {
+          "type": "boolean",
+          "const": true
+        },
+        "syntheticDataNotice": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "snapshotId",
+        "tenantId",
+        "organisation",
+        "site",
+        "generatedAt",
+        "observedAt",
+        "coverageSummary",
+        "nodes",
+        "interfaces",
+        "relationships",
+        "evidence",
+        "synthetic",
+        "syntheticDataNotice"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "snapshotId": {
+          "$ref": "#/$defs/__schema1"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/__schema2"
+        },
+        "organisation": {
+          "$ref": "#/$defs/__schema3"
+        },
+        "site": {
+          "$ref": "#/$defs/__schema4"
+        },
+        "generatedAt": {
+          "$ref": "#/$defs/__schema5"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/__schema6"
+        },
+        "coverageSummary": {
+          "$ref": "#/$defs/__schema7"
+        },
+        "nodes": {
+          "$ref": "#/$defs/__schema8"
+        },
+        "interfaces": {
+          "$ref": "#/$defs/__schema9"
+        },
+        "relationships": {
+          "$ref": "#/$defs/__schema10"
+        },
+        "evidence": {
+          "$ref": "#/$defs/__schema12"
+        },
+        "synthetic": {
+          "type": "boolean",
+          "const": false
+        },
+        "syntheticDataNotice": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "snapshotId",
+        "tenantId",
+        "organisation",
+        "site",
+        "generatedAt",
+        "observedAt",
+        "coverageSummary",
+        "nodes",
+        "interfaces",
+        "relationships",
+        "evidence",
+        "synthetic",
+        "syntheticDataNotice"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "__schema0": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "__schema1": {
+      "type": "string",
+      "minLength": 1
+    },
+    "__schema2": {
+      "type": "string",
+      "minLength": 1
+    },
+    "__schema3": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "__schema4": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "organisationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "organisationId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "__schema5": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "__schema6": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "__schema7": {
+      "type": "object",
+      "properties": {
+        "totalEntities": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "full": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "partial": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "none": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unsupported": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "totalEntities",
+        "full",
+        "partial",
+        "none",
+        "unsupported"
+      ],
+      "additionalProperties": false
+    },
+    "__schema8": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "site",
+              "location",
+              "zone",
+              "subnet",
+              "vlan",
+              "device",
+              "service",
+              "application",
+              "workload",
+              "process",
+              "capability",
+              "user_group",
+              "aggregate",
+              "unknown"
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "identifiers": {
+            "type": "object",
+            "properties": {
+              "hostnames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "ipAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "macAddresses": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "serialNumbers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "hostnames",
+              "ipAddresses",
+              "macAddresses",
+              "serialNumbers"
+            ],
+            "additionalProperties": false
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operationalCriticality": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 1
+              },
+              {
+                "type": "number",
+                "const": 2
+              },
+              {
+                "type": "number",
+                "const": 3
+              },
+              {
+                "type": "number",
+                "const": 4
+              },
+              {
+                "type": "number",
+                "const": 5
+              }
+            ]
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "discovered",
+              "retired"
+            ]
+          },
+          "assessment": {
+            "type": "object",
+            "properties": {
+              "operationalHealth": {
+                "type": "string",
+                "enum": [
+                  "healthy",
+                  "degraded",
+                  "unreachable",
+                  "unknown"
+                ]
+              },
+              "freshness": {
+                "type": "string",
+                "enum": [
+                  "current",
+                  "stale",
+                  "expired",
+                  "never_observed"
+                ]
+              },
+              "coverage": {
+                "type": "string",
+                "enum": [
+                  "full",
+                  "partial",
+                  "none",
+                  "unsupported"
+                ]
+              },
+              "managementState": {
+                "type": "string",
+                "enum": [
+                  "managed",
+                  "passive_only",
+                  "excluded",
+                  "maintenance"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "assessedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "operationalHealth",
+              "freshness",
+              "coverage",
+              "managementState",
+              "confidence",
+              "assessedAt",
+              "reasonCodes",
+              "evidenceIds"
+            ],
+            "additionalProperties": false
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "displayName",
+          "role",
+          "identifiers",
+          "parentId",
+          "operationalCriticality",
+          "lifecycleState",
+          "assessment",
+          "tags",
+          "evidenceIds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "__schema9": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "deviceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ifIndex": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "macAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "media": {
+            "type": "string",
+            "enum": [
+              "copper",
+              "fibre",
+              "wireless",
+              "virtual",
+              "unknown"
+            ]
+          },
+          "speedBps": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "adminState": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "unknown"
+            ]
+          },
+          "operationalState": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "unknown"
+            ]
+          },
+          "vlan": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "access",
+                  "trunk",
+                  "routed",
+                  "unknown"
+                ]
+              },
+              "memberships": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4094
+                }
+              }
+            },
+            "required": [
+              "mode",
+              "memberships"
+            ],
+            "additionalProperties": false
+          },
+          "counters": {
+            "type": "object",
+            "properties": {
+              "inErrors": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outErrors": {
+                "type": "number",
+                "minimum": 0
+              },
+              "inDiscards": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outDiscards": {
+                "type": "number",
+                "minimum": 0
+              },
+              "observedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "inErrors",
+              "outErrors",
+              "inDiscards",
+              "outDiscards",
+              "observedAt"
+            ],
+            "additionalProperties": false
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "deviceId",
+          "name",
+          "macAddresses",
+          "addresses",
+          "media",
+          "speedBps",
+          "adminState",
+          "operationalState",
+          "vlan",
+          "evidenceIds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "__schema10": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "$ref": "#/$defs/__schema11"
+          },
+          "target": {
+            "$ref": "#/$defs/__schema11"
+          },
+          "relationshipType": {
+            "type": "string",
+            "enum": [
+              "physical_adjacency",
+              "layer2_membership",
+              "layer3_reachability",
+              "observed_flow",
+              "hosts",
+              "depends_on",
+              "controls",
+              "serves",
+              "observed_by",
+              "redundancy_peer",
+              "conduit_crossing"
+            ]
+          },
+          "directionality": {
+            "type": "string",
+            "enum": [
+              "directed",
+              "bidirectional",
+              "undirected"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "down",
+              "unknown"
+            ]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "firstObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "lastObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "knowledgeKind": {
+            "type": "string",
+            "enum": [
+              "observed",
+              "configured",
+              "derived",
+              "inferred",
+              "predicted",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "relationshipType",
+          "directionality",
+          "status",
+          "confidence",
+          "firstObservedAt",
+          "lastObservedAt",
+          "evidenceIds",
+          "expiresAt",
+          "knowledgeKind"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "__schema11": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "nodeId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "interfaceId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "nodeId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "nodeId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "interfaceId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "interfaceId"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema12": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "lldp",
+              "cdp",
+              "arp",
+              "mac_table",
+              "snmp",
+              "syslog",
+              "flow",
+              "routing",
+              "manual",
+              "import",
+              "simulation"
+            ]
+          },
+          "collectorId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "confidenceContribution": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sourceType",
+          "collectorId",
+          "observedAt",
+          "expiresAt",
+          "summary",
+          "confidenceContribution",
+          "limitations"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

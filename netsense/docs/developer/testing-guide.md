@@ -5,6 +5,7 @@
 |-------|---------|----------|---------|
 | Unit (TS) | `cd dashboard && npm run test:run` | `dashboard/src/**/*.test.ts` | <10s |
 | Coverage (TS) | `cd dashboard && npm run test:coverage` | domain and adapter modules | <15s |
+| Contract parity | `cd dashboard && npm run contracts:check` | generated portable JSON Schemas | <5s |
 | E2E | `cd dashboard && npm run test:e2e` | `dashboard/e2e/` | ~1min |
 | Accessibility | `cd dashboard && npm run test:a11y` | axe through Playwright | ~20s |
 | Production build | `cd dashboard && npm run build` | TypeScript + Vite | <30s |
@@ -28,6 +29,9 @@ cd dashboard && npm test -- -t "finds a healthy alternate path"
 
 The current frontend gate is 80% for statements, branches, functions, and
 lines in the included domain/adapter modules.
+
+Contract changes require `npm run contracts:generate` followed by
+`npm run contracts:check`. Generated schema files are not hand-edited.
 
 CI automation is not checked in yet. Local gates are mandatory until the CI
 workflow exists; documentation must not describe them as remotely enforced.

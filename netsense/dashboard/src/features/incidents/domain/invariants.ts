@@ -14,6 +14,9 @@ export function assertIncidentScenarioInvariants(scenario: IncidentScenario): vo
   if (scenario.incident.siteId !== scenario.snapshot.site.id) {
     violations.push('Incident site must match the topology snapshot site.');
   }
+  if (scenario.incident.tenantId !== scenario.snapshot.tenantId) {
+    violations.push('Incident tenant must match the topology snapshot tenant.');
+  }
 
   for (const observation of scenario.observations) {
     if (observationIds.has(observation.id)) {

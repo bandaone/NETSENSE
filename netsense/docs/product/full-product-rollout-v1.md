@@ -14,16 +14,25 @@ TimescaleDB migrations, deployment infrastructure, generated API client, and
 cross-component test harness described by `docs/developer/repository-guide.md`
 do not yet exist in this repository.
 
-Atlas currently provides a validated, synthetic, cross-industry topology
-snapshot, independent health/freshness/coverage/management dimensions,
-versioned ELK layouts, Operations/Physical/Dependency lenses, semantic label
-detail, an accessible table representation, operational inspection, and a
-calm Observe workspace.
+Atlas currently provides validated synthetic cross-industry topology and
+incident cases; independent health, freshness, coverage, and management
+dimensions; versioned ELK layouts; Operations, Physical, and Dependency
+lenses; semantic label detail; an accessible table; search and composable
+filtering; relationship evidence inspection; deterministic incident analysis;
+alternate-path handling; session workflow state; and calibrated Operations
+Dark and Daylight environments.
 
-The following documented capabilities are not implemented yet: deterministic
-incident analysis, incident and change projections, relationship inspection,
-search and composable filtering, session workflow state, sector switching,
-live API/WebSocket adapters, and every probe/platform capability.
+Exact portable topology, topology-diff, incident, mutation, and problem
+schemas are generated from the runtime domain models. Topology and incident
+fixture adapters implement explicit tenant-scoped repository boundaries.
+Stream classification rejects cross-scope updates, ignores duplicates, and
+requires a bounded refresh after sequence gaps or snapshot mismatches.
+
+The following capabilities are not implemented yet: a live HTTP/WebSocket
+adapter, platform service, database and migrations, authentication/RBAC,
+database tenant isolation, durable workflow state, passive probe, alert
+delivery, packet forensics, production deployment, and live Layer 2, Layer 3,
+Flow, Change, and Discovery evidence inputs.
 
 ## Product boundaries
 
@@ -78,7 +87,7 @@ are session-only.
 
 ## Rollout sequence
 
-### R1 — Contract and reasoning foundation
+### R1 — Contract and reasoning foundation — frontend complete
 
 - Define versioned incident inputs and outputs.
 - Implement deterministic dependency traversal, candidate ranking, alternate
@@ -88,7 +97,7 @@ are session-only.
   ambiguous synthetic scenarios.
 - Complete canonical JSON/OpenAPI contracts before a live adapter is added.
 
-### R2 — Investigate
+### R2 — Investigate — frontend complete
 
 - Add real search and composable filters.
 - Add focused topology without mutating stored positions.
@@ -96,7 +105,7 @@ are session-only.
 - Add dependency chains and shared-failure-domain comparison.
 - Preserve keyboard and table workflows.
 
-### R3 — Resolve
+### R3 — Resolve — frontend complete with session-only actions
 
 - Add a tested incident subgraph, evidence timeline, ranked candidates,
   classified impact, alternate paths, limitations, and safe next checks.
@@ -131,17 +140,16 @@ are session-only.
 
 ## Current engineering risks
 
-- The canonical OpenAPI and event/topology/alert schemas are empty, despite the
-  contract-first policy.
-- The repository guide and quick-start describe nonexistent directories and
-  commands, which can cause false release confidence.
-- The current main application chunk is approximately 771 kB minified and the
+- No Go or Python consumer validates the generated portable schemas yet, so
+  cross-language parity is not proven.
+- The current main application chunk is approximately 848 kB minified and the
   ELK worker approximately 1.6 MB; route and worker loading need measurement
   and code splitting before scale hardening.
-- Existing fixtures prove only healthy presentation. Incident language must
-  remain absent until R1 analysis tests pass.
 - Browser-local workflow state is not durable, shareable, or auditable across
   users. The UI must label this limitation until R6.
+- The OpenAPI contract is ready for implementation but no authenticated
+  service exists; frontend controls and repository scope checks are not
+  substitutes for API authorization or database RLS.
 
 ## Release gates
 

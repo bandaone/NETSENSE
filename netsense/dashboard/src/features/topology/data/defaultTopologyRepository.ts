@@ -9,6 +9,7 @@ import { FixtureTopologyRepository } from './fixtureTopologyRepository';
 import { MemoryPositionStore } from '../layout/memoryPositionStore';
 
 export const defaultTopologyRequest = {
+  tenantId: ASTER_ORGANISATION_ID,
   organisationId: ASTER_ORGANISATION_ID,
   siteId: ASTER_SITE_ID,
   scenarioId: ASTER_HEALTHY_SCENARIO_ID,

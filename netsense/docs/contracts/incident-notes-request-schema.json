@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/incident-notes-request-schema.json",
+  "title": "NetSense Incident Notes Request",
+  "description": "Expected-state precondition and durable investigation notes.",
+  "type": "object",
+  "properties": {
+    "expectedState": {
+      "type": "string",
+      "enum": [
+        "open",
+        "acknowledged"
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    }
+  },
+  "required": [
+    "expectedState",
+    "notes"
+  ],
+  "additionalProperties": false
+}

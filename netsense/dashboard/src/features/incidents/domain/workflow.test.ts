@@ -7,7 +7,12 @@ import {
   type IncidentWorkflow,
 } from './workflow';
 
-const initial: IncidentWorkflow = { state: 'open', notes: '', actions: [] };
+const initial: IncidentWorkflow = {
+  state: 'open',
+  notes: '',
+  actualRootCauseEntityId: null,
+  actions: [],
+};
 
 describe('incident session workflow', () => {
   it('records an ordered acknowledgement, note, and resolution trail', () => {

@@ -2,15 +2,16 @@
 
 **Review scope:** Observe, Investigate, Resolve, deterministic incident
 reasoning, incident workflow, topology search/filtering, relationship
-inspection, calibrated Operations Dark and Daylight environments, proposed
-contracts, and supporting documentation.
+inspection, calibrated Operations Dark and Daylight environments, exact
+contracts, repository boundaries, stream ordering, and supporting
+documentation.
 
 ## Outcome
 
 The frontend rollout is accepted as a tested synthetic reference
 implementation. It is not accepted as a complete NetSense platform release:
-there is no probe, platform service, database, authentication, tenant
-enforcement, durable incident storage, or live topology stream.
+there is no probe, platform service, database, authentication, server-side
+tenant enforcement, durable incident storage, or live topology stream.
 
 ## Review findings
 
@@ -23,8 +24,17 @@ enforcement, durable incident storage, or live topology stream.
 - Direct observations, downstream risk, stale/unknown impact, and healthy
   alternate paths remain separate.
 - A failed redundant link produces no confirmed downstream outage.
-- Acknowledgement and resolution transitions reject duplicates, invalid state,
-  and resolution without substantive notes.
+- Acknowledgement, notes, and resolution transitions validate exact inputs,
+  reject invalid expected state, and replay duplicate idempotency keys without
+  repeating an action.
+- Tenant/site/incident scope is explicit at every repository operation. A
+  mismatched scope returns the same non-disclosing not-found result as an
+  unknown incident.
+- Trusted actor identity and authoritative timestamps are injected by the
+  repository execution context; the browser request cannot choose either.
+- Topology diffs reject unsupported versions and cross-tenant scope, ignore
+  replayed sequences, and request a full refresh on gaps or base-snapshot
+  mismatch.
 
 Result: acceptable for deterministic synthetic scenarios. Real collector data
 will require integration, ordering, replay, and concurrency tests.
@@ -36,7 +46,7 @@ classification, checks, and limitation functions. Each branch represents an
 explicit business rule. No numerical complexity tool is installed, so no
 unsupported score is claimed.
 
-`ResolveWorkspace.tsx` (approximately 437 lines) and
+`ResolveWorkspace.tsx` (approximately 584 lines) and
 `InvestigateWorkspace.tsx` (approximately 342 lines) are larger than desirable.
 Their internal components remain cohesive, but the next UI expansion should
 extract the reasoning rail sections and search rail into separately tested
@@ -56,10 +66,11 @@ abstractions to the pure domain layer.
   depending on a screen module.
 - Fixtures remain explicitly synthetic and deterministic.
 
-Questionable decision: `ResolveWorkspace` currently selects fixture scenarios
-directly. This keeps the demonstration explicit and small, but the live-data
-milestone must introduce an incident repository/data boundary before any API
-integration; components must not gain fetch logic.
+Questionable decision: `ResolveWorkspace` now consumes an incident repository,
+but the component remains responsible for list/detail loading, reasoning-rail
+presentation, and mutation orchestration. This is acceptable for one bounded
+workspace, but the live adapter milestone should extract a tested controller
+hook rather than add retry and cancellation branches directly to the JSX.
 
 ### 4. Coupling and cohesion
 
@@ -68,9 +79,11 @@ presentation are separate. The incident subgraph consumes analysis output and
 cannot invent impact. The renderer accepts only a small presentation overlay
 and does not import incident-domain types.
 
-The remaining coupling is intentional fixture selection in Resolve and the
-shared use of the in-memory layout store. Both must be replaced by injected
-repositories for live data and per-user durable layout storage.
+Topology and incident data both cross small repository interfaces; the default
+adapters deliberately select synthetic fixtures outside presentation code.
+The remaining coupling is the module-level default repository and the shared
+in-memory layout store. Production composition must inject live adapters and
+persist layouts per authenticated user without changing domain modules.
 
 ### 5. Duplication
 
@@ -83,20 +96,30 @@ workspace modules, but business rules are not duplicated in JSX.
 - Repository/schema/invariant errors fail before UI consumption.
 - Layout failures render an explicit recoverable state.
 - Empty search/filter results explain how to recover.
-- Workflow transitions surface errors and prevent invalid repeat operations.
+- Workflow transitions surface errors, validate trusted execution metadata,
+  reject root-cause entities absent from the incident snapshot, and prevent
+  invalid repeat operations.
+- Idempotency keys are cryptographically generated and retained across a
+  failed retry; reuse for a different operation is rejected.
+- Stream sequence gaps and snapshot mismatches have a bounded full-refresh
+  decision instead of attempting unsafe partial application.
 
-Missing for live operation: retry policy, request cancellation, WebSocket
-sequence recovery, idempotency persistence, optimistic-concurrency conflict
-handling, offline mutation queues, and server-derived audit history.
+Missing for live operation: HTTP retry policy, request cancellation,
+authenticated WebSocket reconnect/refresh execution, durable idempotency,
+server-side optimistic concurrency, offline policy, and immutable audit
+history. The frontend models these decisions but cannot provide their durable
+guarantees.
 
 ### 7. Security and authorization
 
 - No UI control is represented as durable or authorised; workflow actions are
   visibly labelled session-only.
-- The proposed API contract requires bearer authentication, tenant-scoped
+- The API contract requires bearer authentication, tenant-scoped
   resources, role metadata, idempotency keys, expected-state preconditions, and
   non-disclosing problem responses.
-- The production dependency audit reports zero vulnerabilities.
+- The full and production-only dependency audits report zero known
+  vulnerabilities after upgrading the Node-18-compatible Vite, Vitest,
+  Playwright, and TypeScript ESLint toolchain.
 - No real organisation/site data or tracked `node_modules` was found.
 
 Release blocker for a live backend: frontend navigation and disabled buttons
@@ -105,11 +128,16 @@ before persistent actions are enabled. Secrets, audit immutability, token
 handling, CSRF/CORS policy, rate limits, and WebSocket authentication remain
 unimplemented.
 
+The coverage toolchain pins `test-exclude` 7.0.1 because its next patch pulls a
+Node-20-only transitive dependency despite declaring Node 18 compatibility.
+This is an explicit temporary override, not application runtime code. Remove
+it during the Node 20 toolchain migration and re-run the full audit and gates.
+
 ### 8. Test coverage
 
-- 53 unit tests pass across 15 files.
-- Included domain/adapter coverage is 91.01% statements, 82.64% branches,
-  89.01% functions, and 91.01% lines, with enforced 80% thresholds.
+- 68 unit tests pass across 17 files.
+- Included domain/adapter coverage is 93.05% statements, 85.21% branches,
+  91.05% functions, and 93.05% lines, with enforced 80% thresholds.
 - 16 Playwright flows pass, including environment persistence, search,
   relationship inspection, workflow transitions, alternate paths, axe, and all
   three target workstation resolutions.
@@ -126,12 +154,15 @@ The implementation follows the typed-domain → projection → layout → render
 flow and keeps renderer positions outside topology snapshots. Documentation now
 distinguishes implemented frontend from target probe/platform architecture.
 
-Questionable decision: the OpenAPI snapshot and incident-analysis schemas keep
-some nested arrays as generic objects while the Zod contracts are exact. This
-avoids duplicating several hundred schema lines during the frontend slice, but
-it is too permissive for generated clients. Before platform implementation,
-generate or hand-author one canonical exact schema and test parity across
-Python, Go, and TypeScript.
+Exact Draft 2020-12 JSON Schemas are deterministically generated from the Zod
+runtime schemas, and OpenAPI 3.1 references those portable artifacts. A drift
+gate fails when runtime and checked-in contracts diverge. This removes the
+former permissive nested-object definitions.
+
+Questionable decision: TypeScript is currently the only executable consumer
+of the generated contracts. Before platform implementation, Python and Go
+consumers must validate shared conformance fixtures so language-specific
+validator behavior cannot silently diverge.
 
 ### 10. Scalability and performance
 
@@ -141,9 +172,9 @@ fixtures.
 
 Measured production output:
 
-- main JavaScript: approximately 835.08 kB minified / 253.46 kB gzip;
+- main JavaScript: approximately 847.72 kB minified / 256.93 kB gzip;
 - ELK worker: approximately 1,595.33 kB;
-- CSS: approximately 24.22 kB / 6.12 kB gzip.
+- CSS: approximately 24.24 kB / 6.12 kB gzip.
 
 The Vite chunk warning is valid. Before the 1,000-entity hardening milestone,
 route-split Observe/Investigate/Resolve, load Cytoscape/ELK only for map views,
@@ -195,21 +226,23 @@ token-parity test if palette ownership grows.
 | Dependency tree | Pass |
 | TypeScript strict build | Pass |
 | ESLint, zero warnings | Pass |
-| Unit tests | 53/53 pass |
-| Coverage thresholds | Pass; 91.01/82.64/89.01/91.01 |
+| Unit tests | 68/68 pass |
+| Coverage thresholds | Pass; 93.05/85.21/91.05/93.05 |
 | Playwright | 16/16 pass |
 | Axe | Operations Dark and Daylight; zero automated violations |
 | Environment persistence | Pass; explicit choice survives reload |
 | Visual environment review | Pass at 1440×900; topology rendered in both |
 | Target resolutions | 1366×768, 1440×900, 1920×1080 pass |
 | Production build | Pass with documented chunk-size warning |
-| Production dependency audit | Zero vulnerabilities |
-| Contract syntax | JSON and YAML parse successfully |
+| Full dependency audit | Zero known vulnerabilities |
+| Production dependency audit | Zero known vulnerabilities |
+| Contract drift | Pass; 10 generated schemas referenced by OpenAPI |
+| Contract syntax | JSON and OpenAPI YAML parse successfully |
 
 ## Required next priorities
 
-1. Exact, generated multi-language API contract and incident repository
-   boundary.
+1. Authenticated HTTP/WebSocket adapters plus Python and Go contract
+   conformance fixtures; keep fixture adapters for deterministic demos.
 2. Route/chunk splitting and 500/1,000-entity performance harness.
 3. Layer 2, Layer 3, Flow, Change, and Discovery inputs before exposing those
    lenses.

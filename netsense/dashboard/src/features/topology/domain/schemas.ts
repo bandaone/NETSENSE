@@ -130,17 +130,16 @@ export const networkInterfaceSchema = z.object({
   evidenceIds: z.array(z.string()),
 }).strict();
 
-const relationshipEndpointSchema = z.object({
-  nodeId: z.string().min(1).optional(),
-  interfaceId: z.string().min(1).optional(),
-}).strict().superRefine((endpoint, context) => {
-  if (!endpoint.nodeId && !endpoint.interfaceId) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'A relationship endpoint requires a nodeId or interfaceId.',
-    });
-  }
-});
+export const relationshipEndpointSchema = z.union([
+  z.object({
+    nodeId: z.string().min(1),
+    interfaceId: z.string().min(1).optional(),
+  }).strict(),
+  z.object({
+    nodeId: z.string().min(1).optional(),
+    interfaceId: z.string().min(1),
+  }).strict(),
+]);
 
 export const topologyRelationshipSchema = z.object({
   id: z.string().min(1),
@@ -200,13 +199,12 @@ export const coverageSummarySchema = z.object({
   unsupported: z.number().int().nonnegative(),
 }).strict();
 
-export const topologySnapshotSchema = z.object({
+const topologySnapshotBaseSchema = z.object({
   schemaVersion: z.literal(TOPOLOGY_SCHEMA_VERSION),
   snapshotId: z.string().min(1),
+  tenantId: z.string().min(1),
   organisation: organisationSchema,
   site: siteSchema,
-  synthetic: z.literal(true),
-  syntheticDataNotice: z.string().min(1),
   generatedAt: z.string().datetime(),
   observedAt: z.string().datetime(),
   coverageSummary: coverageSummarySchema,
@@ -215,3 +213,14 @@ export const topologySnapshotSchema = z.object({
   relationships: z.array(topologyRelationshipSchema),
   evidence: z.array(evidenceRecordSchema),
 }).strict();
+
+export const topologySnapshotSchema = z.discriminatedUnion('synthetic', [
+  topologySnapshotBaseSchema.extend({
+    synthetic: z.literal(true),
+    syntheticDataNotice: z.string().min(1),
+  }),
+  topologySnapshotBaseSchema.extend({
+    synthetic: z.literal(false),
+    syntheticDataNotice: z.null(),
+  }),
+]);

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  TopologyNotFoundError,
   TopologyValidationError,
   UnsupportedTopologySchemaVersionError,
 } from '../domain/errors';
@@ -13,6 +14,11 @@ import type { TopologyRepository, TopologySnapshotRequest } from './topologyRepo
 
 const SUPPORTED_VERSIONS = [TOPOLOGY_SCHEMA_VERSION] as const;
 const versionEnvelopeSchema = z.object({ schemaVersion: z.string() }).passthrough();
+const scopeEnvelopeSchema = z.object({
+  tenantId: z.string(),
+  organisation: z.object({ id: z.string() }).passthrough(),
+  site: z.object({ id: z.string() }).passthrough(),
+}).passthrough();
 
 export function parseTopologySnapshot(rawSnapshot: unknown): TopologySnapshot {
   const versionEnvelope = versionEnvelopeSchema.safeParse(rawSnapshot);
@@ -42,16 +48,18 @@ export class FixtureTopologyRepository implements TopologyRepository {
   async getSnapshot(request: TopologySnapshotRequest): Promise<TopologySnapshot> {
     const fixture = this.fixtures.get(request.scenarioId);
     if (!fixture) {
-      throw new TopologyValidationError(`Unknown synthetic scenario: ${request.scenarioId}`);
+      throw new TopologyNotFoundError(request.scenarioId);
     }
 
-    const snapshot = parseTopologySnapshot(fixture);
+    const scope = scopeEnvelopeSchema.safeParse(fixture);
     if (
-      snapshot.organisation.id !== request.organisationId ||
-      snapshot.site.id !== request.siteId
+      !scope.success ||
+      scope.data.tenantId !== request.tenantId ||
+      scope.data.organisation.id !== request.organisationId ||
+      scope.data.site.id !== request.siteId
     ) {
-      throw new TopologyValidationError('Requested scope does not match the fixture scope.');
+      throw new TopologyNotFoundError(request.scenarioId);
     }
-    return snapshot;
+    return parseTopologySnapshot(fixture);
   }
 }

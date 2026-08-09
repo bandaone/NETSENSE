@@ -37,4 +37,22 @@ describe('Atlas topology schemas', () => {
 
     expect(result.success).toBe(false);
   });
+
+  it('supports live snapshots without weakening synthetic labelling', () => {
+    const liveSnapshot = {
+      ...healthyMukubaSnapshotFixture,
+      synthetic: false,
+      syntheticDataNotice: null,
+    };
+
+    expect(topologySnapshotSchema.safeParse(liveSnapshot).success).toBe(true);
+    expect(topologySnapshotSchema.safeParse({
+      ...healthyMukubaSnapshotFixture,
+      syntheticDataNotice: null,
+    }).success).toBe(false);
+    expect(topologySnapshotSchema.safeParse({
+      ...liveSnapshot,
+      syntheticDataNotice: 'Misleading fixture label',
+    }).success).toBe(false);
+  });
 });

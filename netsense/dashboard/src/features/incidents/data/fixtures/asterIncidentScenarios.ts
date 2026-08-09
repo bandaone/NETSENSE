@@ -6,6 +6,7 @@ import {
   ASTER_CORE_01_ID,
   ASTER_FINANCE_ID,
   ASTER_IDENTITY_ID,
+  ASTER_ORGANISATION_ID,
   ASTER_SITE_ID,
   healthyAsterEnterpriseSnapshotFixture,
 } from '../../../topology/data/fixtures/healthyAsterEnterprise';
@@ -16,6 +17,8 @@ const COMPUTE_EVIDENCE_ID = 'evidence:aster:compute-unreachable';
 const SERVICE_EVIDENCE_ID = 'evidence:aster:service-symptoms';
 const FAILED_LINK_EVIDENCE_ID = 'evidence:aster:core-01-access-link-down';
 export const ASTER_FAILED_REDUNDANT_LINK_ID = 'relationship:aster:core-01:access';
+export const ASTER_SERVICE_DEPENDENCY_INCIDENT_ID = 'incident:aster:2026-08-06:identity-services';
+export const ASTER_REDUNDANT_LINK_INCIDENT_ID = 'incident:aster:2026-08-06:redundant-access-link';
 
 function assessment(
   source: EntityAssessment,
@@ -48,7 +51,8 @@ function withIncidentEvidence(
 export const asterServiceDependencyIncidentScenario: IncidentScenario = {
   schemaVersion: '1.0.0',
   incident: {
-    id: 'incident:aster:2026-08-06:identity-services',
+    id: ASTER_SERVICE_DEPENDENCY_INCIDENT_ID,
+    tenantId: ASTER_ORGANISATION_ID,
     title: 'Identity-dependent services unavailable',
     severity: 'major',
     state: 'open',
@@ -140,7 +144,8 @@ export const asterServiceDependencyIncidentScenario: IncidentScenario = {
 export const asterRedundantLinkIncidentScenario: IncidentScenario = {
   schemaVersion: '1.0.0',
   incident: {
-    id: 'incident:aster:2026-08-06:redundant-access-link',
+    id: ASTER_REDUNDANT_LINK_INCIDENT_ID,
+    tenantId: ASTER_ORGANISATION_ID,
     title: 'One campus access uplink down',
     severity: 'warning',
     state: 'open',

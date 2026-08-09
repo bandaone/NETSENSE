@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/incident-acknowledgement-request-schema.json",
+  "title": "NetSense Incident Acknowledgement Request",
+  "description": "Expected-state precondition for an idempotent acknowledgement.",
+  "type": "object",
+  "properties": {
+    "expectedState": {
+      "type": "string",
+      "const": "open"
+    }
+  },
+  "required": [
+    "expectedState"
+  ],
+  "additionalProperties": false
+}

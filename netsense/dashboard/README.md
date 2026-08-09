@@ -18,6 +18,7 @@ npm run dev
 npm run lint
 npm run test:run
 npm run test:coverage
+npm run contracts:check
 npm run test:e2e
 npm run test:a11y
 npm run build
@@ -40,38 +41,14 @@ The choice persists in the browser and preserves identical topology semantics.
   persistence.
 - `src/features/incidents/domain` owns deterministic reasoning and workflow
   rules.
+- `src/features/incidents/data` owns the tenant-scoped incident repository
+  boundary; components do not import scenario fixtures.
 - `src/features/**/data/fixtures` contains explicitly synthetic scenarios.
 - components render domain outputs; they do not manufacture incident claims.
 
 See `../docs/product/full-product-rollout-v1.md` for the verified product
 boundary and rollout plan.
 
-<!-- Historical Vite template guidance retained below for toolchain context. -->
-
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Portable JSON Schemas are generated from the runtime domain schemas with
+`npm run contracts:generate`; CI and release work should use
+`npm run contracts:check` to reject contract drift.

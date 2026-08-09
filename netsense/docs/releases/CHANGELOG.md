@@ -13,7 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   alternate-path detection, limitations, and safe next checks.
 - Real topology search, composable filters, node and relationship evidence inspection.
 - Guarded session-only acknowledgement, notes, and resolution workflow.
-- Versioned event, alert, topology-diff, and proposed platform API contracts.
+- Calibrated Operations Dark and Daylight environments with theme-aware Atlas rendering.
+- Tenant-scoped topology and incident repository boundaries, including
+  idempotent expected-state workflow mutations.
+- Generated exact JSON Schemas for topology snapshots and diffs, incident
+  cases and analysis, mutation inputs, pagination, and problem responses.
+- Ordered topology-stream classification for apply, duplicate, gap,
+  snapshot-mismatch, and cross-scope cases.
+- Versioned event, alert, generated topology/incident, and contract-ready
+  platform API definitions.
 - Verified product rollout boundary separating implemented frontend from planned platform/probe work.
 - Complete documentation tree (architecture, requirements, UX, testing, ADRs, RFCs)
 - Functional requirements (75 FRs) and non-functional requirements (20 NFRs)

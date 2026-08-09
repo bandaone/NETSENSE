@@ -27,8 +27,9 @@ not claim complete visibility when monitoring coverage or evidence is partial.
 
 **Current version:** 0.0.0 (pre-release)
 
-**Next milestone:** Complete Atlas contracts and hardening, then begin the
-platform as a separate contract-driven workstream.
+**Next milestone:** Implement authenticated HTTP/WebSocket adapters and
+cross-language contract conformance, then begin the platform as a separate
+contract-driven workstream.
 
 ## Documentation Structure
 

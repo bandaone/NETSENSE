@@ -11,6 +11,7 @@ export interface IncidentAction {
 export interface IncidentWorkflow {
   state: IncidentState;
   notes: string;
+  actualRootCauseEntityId: string | null;
   actions: IncidentAction[];
 }
 
@@ -72,6 +73,7 @@ export function resolveIncident(
   workflow: IncidentWorkflow,
   actor: string,
   occurredAt: string,
+  actualRootCauseEntityId: string | null = null,
 ): IncidentWorkflow {
   if (workflow.state !== 'acknowledged') {
     throw new IncidentWorkflowError('The incident must be acknowledged before resolution.');
@@ -82,6 +84,7 @@ export function resolveIncident(
   return {
     ...workflow,
     state: 'resolved',
+    actualRootCauseEntityId,
     actions: [...workflow.actions, {
       id: actionId('resolved', occurredAt),
       kind: 'resolved',

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.netsense.example/schemas/incident-resolution-request-schema.json",
+  "title": "NetSense Incident Resolution Request",
+  "description": "Expected-state precondition, resolution evidence, and optional actual source.",
+  "type": "object",
+  "properties": {
+    "expectedState": {
+      "type": "string",
+      "const": "acknowledged"
+    },
+    "resolutionNotes": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 10000
+    },
+    "actualRootCauseEntityId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "expectedState",
+    "resolutionNotes",
+    "actualRootCauseEntityId"
+  ],
+  "additionalProperties": false
+}

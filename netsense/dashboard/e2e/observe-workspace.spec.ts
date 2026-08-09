@@ -156,7 +156,9 @@ test('Resolve renders analysis outputs and enforces the session workflow', async
   await page.getByRole('link', { name: 'Resolve' }).click();
   await expect(page).toHaveURL(/\/resolve$/);
   await expect(page.getByRole('heading', { name: 'Resolve with defensible evidence' })).toBeVisible();
-  await expect(page.getByText('Identity-dependent services unavailable')).toBeVisible();
+  await expect(page.getByRole('heading', {
+    name: 'Identity-dependent services unavailable',
+  })).toBeVisible();
   await expect(page.getByText('Probable-source candidates')).toBeVisible();
   await expect(page.getByText('Confirmed affected')).toBeVisible();
   await expect(page.getByText('No people or user count is inferred', { exact: false })).toBeVisible();
@@ -176,9 +178,11 @@ test('Resolve renders analysis outputs and enforces the session workflow', async
 test('Resolve exposes a healthy alternate path without claiming downstream outage', async ({ page }) => {
   await openObserve(page);
   await page.getByRole('link', { name: 'Resolve' }).click();
-  await page.getByLabel('Synthetic scenario').selectOption('redundant');
+  await page.getByLabel('Synthetic scenario').selectOption({
+    label: 'One campus access uplink down',
+  });
 
-  await expect(page.getByText('One campus access uplink down')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'One campus access uplink down' })).toBeVisible();
   await expect(page.getByText('Alternate path observed')).toBeVisible();
   await expect(page.getByText('Unaffected · alternate path')).toBeVisible();
   await expect(page.getByText('Confirmed affected')).toHaveCount(0);

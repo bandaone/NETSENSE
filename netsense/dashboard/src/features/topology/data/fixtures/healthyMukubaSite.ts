@@ -264,6 +264,7 @@ const relationships: TopologyRelationship[] = [
 export const healthyMukubaSnapshotFixture: TopologySnapshot = {
   schemaVersion: '1.0.0',
   snapshotId: 'snapshot:mukuba:healthy:2026-08-02T12:00:00Z',
+  tenantId: MUKUBA_ORGANISATION_ID,
   organisation: {
     id: MUKUBA_ORGANISATION_ID,
     name: 'Mukuba Industrial Systems',

@@ -7,12 +7,14 @@ import {
   healthyMukubaSnapshotFixture,
 } from './fixtures/healthyMukubaSite';
 import {
+  TopologyNotFoundError,
   TopologyValidationError,
   UnsupportedTopologySchemaVersionError,
 } from '../domain/errors';
 import { FixtureTopologyRepository, parseTopologySnapshot } from './fixtureTopologyRepository';
 
 const request = {
+  tenantId: MUKUBA_ORGANISATION_ID,
   organisationId: MUKUBA_ORGANISATION_ID,
   siteId: MUKUBA_SITE_ID,
   scenarioId: HEALTHY_SCENARIO_ID,
@@ -46,8 +48,15 @@ describe('FixtureTopologyRepository', () => {
       new Map([[HEALTHY_SCENARIO_ID, healthyMukubaSnapshotFixture]]),
     );
     await expect(repository.getSnapshot({ ...request, siteId: 'site:other' })).rejects.toThrow(
-      /scope does not match/,
+      TopologyNotFoundError,
     );
+    await expect(repository.getSnapshot({ ...request, tenantId: 'tenant:other' })).rejects.toThrow(
+      'The requested topology is not available in this scope.',
+    );
+    await expect(repository.getSnapshot({
+      ...request,
+      scenarioId: 'scenario:not-present',
+    })).rejects.toThrow('The requested topology is not available in this scope.');
   });
 
   it('contains no legacy incident conclusions or real-site identifiers', () => {

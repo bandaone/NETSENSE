@@ -205,6 +205,7 @@ const relationships: TopologyRelationship[] = [
 export const healthyAsterEnterpriseSnapshotFixture: TopologySnapshot = {
   schemaVersion: '1.0.0',
   snapshotId: 'snapshot:aster-enterprise:healthy:2026-08-06T08:30:00Z',
+  tenantId: ASTER_ORGANISATION_ID,
   organisation: { id: ASTER_ORGANISATION_ID, name: 'Aster Services Group' },
   site: {
     id: ASTER_SITE_ID,

@@ -1,46 +1,43 @@
-# NetSense — API Error Codes
+# NetSense API problem responses
 
-All API errors follow a consistent format:
+All API failures use `application/problem+json` and conform to the generated
+`problem-schema.json` contract.
 
 ```json
 {
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable description",
-    "details": {}
-  }
+  "type": "https://problems.netsense.example/incident-state-conflict",
+  "title": "Incident state conflict",
+  "status": 409,
+  "code": "INCIDENT_STATE_CONFLICT",
+  "detail": "The incident changed after this view was loaded.",
+  "traceId": "trace_01J5P7M8NC0YQ4TQ3GF6B2M4S1"
 }
 ```
 
-### HTTP Status Codes
+## Response rules
 
-| Status | Meaning | Usage |
-|---|---|---|
-| 200 | OK | Successful GET/PUT/PATCH |
-| 201 | Created | Successful POST |
-| 400 | Bad Request | Invalid input, missing required fields |
-| 401 | Unauthorized | Missing or invalid JWT |
-| 403 | Forbidden | Valid JWT but insufficient role |
-| 404 | Not Found | Resource does not exist |
-| 409 | Conflict | Duplicate resource |
-| 422 | Unprocessable Entity | Validation error |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Unexpected server error |
+- `traceId` is safe to show to an operator and correlates with protected logs.
+- Validation failures may include bounded `violations` containing only a path
+  and safe message.
+- Authentication errors do not reveal token internals.
+- A missing resource and a resource outside the authenticated tenant return
+  the same non-disclosing 404 response.
+- Internal exceptions never expose stack traces, SQL, secrets, collector
+  addresses, or another tenant's identifiers.
+- Rate-limited responses include `Retry-After`.
 
-### Error Codes
+## Stable codes
 
-| Code | HTTP | Message | Details |
-|---|---|---|---|
-| AUTH_MISSING | 401 | Authentication required | — |
-| AUTH_EXPIRED | 401 | Token expired | expired_at |
-| AUTH_INVALID | 401 | Invalid token | — |
-| FORBIDDEN | 403 | Insufficient permissions | required_role |
-| DEVICE_NOT_FOUND | 404 | Device not found | ip |
-| INCIDENT_NOT_FOUND | 404 | Incident not found | id |
-| DUPLICATE_DEVICE | 409 | Device already exists | ip |
-| VALIDATION_ERROR | 422 | Request validation failed | errors: [{field, message}] |
-| MAINTENANCE_OVERLAP | 409 | Overlapping maintenance window | existing_window_id |
-| PCAP_NOT_AVAILABLE | 404 | PCAP file not found | incident_id |
-| PCAP_KEY_EXPIRED | 401 | Share link expired | expired_at |
-| RATE_LIMITED | 429 | Too many requests | retry_after_seconds |
-| INTERNAL_ERROR | 500 | Internal server error | request_id (log correlation) |
+| Code | HTTP | Meaning |
+| --- | ---: | --- |
+| `AUTH_MISSING` | 401 | Authentication is required. |
+| `AUTH_EXPIRED` | 401 | The authenticated session expired. |
+| `AUTH_INVALID` | 401 | Authentication could not be validated. |
+| `FORBIDDEN` | 403 | The principal lacks permission for this operation. |
+| `RESOURCE_NOT_FOUND` | 404 | The resource is absent or outside visible tenant scope. |
+| `INCIDENT_STATE_CONFLICT` | 409 | The expected incident state no longer matches. |
+| `IDEMPOTENCY_CONFLICT` | 409 | An idempotency key was reused with a different request. |
+| `TOPOLOGY_SEQUENCE_CONFLICT` | 409 | A stream or snapshot precondition no longer matches. |
+| `VALIDATION_ERROR` | 422 | Structural or business validation failed. |
+| `RATE_LIMITED` | 429 | A bounded principal or tenant rate was exceeded. |
+| `INTERNAL_ERROR` | 500 | An unexpected failure was recorded under the trace ID. |

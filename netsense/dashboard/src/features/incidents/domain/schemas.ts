@@ -6,6 +6,19 @@ export const INCIDENT_SCHEMA_VERSION = '1.0.0' as const;
 export const incidentSeveritySchema = z.enum(['information', 'warning', 'major', 'critical']);
 export const incidentStateSchema = z.enum(['open', 'acknowledged', 'resolved']);
 
+export const incidentSummarySchema = z.object({
+  schemaVersion: z.literal(INCIDENT_SCHEMA_VERSION),
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  siteId: z.string().min(1),
+  title: z.string().min(1),
+  severity: incidentSeveritySchema,
+  state: incidentStateSchema,
+  detectedAt: z.string().datetime(),
+  acknowledgedAt: z.string().datetime().nullable(),
+  resolvedAt: z.string().datetime().nullable(),
+}).strict();
+
 export const incidentTargetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('node'), id: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('relationship'), id: z.string().min(1) }).strict(),
@@ -33,6 +46,7 @@ export const incidentScenarioSchema = z.object({
   schemaVersion: z.literal(INCIDENT_SCHEMA_VERSION),
   incident: z.object({
     id: z.string().min(1),
+    tenantId: z.string().min(1),
     title: z.string().min(1),
     severity: incidentSeveritySchema,
     state: incidentStateSchema,

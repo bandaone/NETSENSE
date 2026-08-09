@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, CheckCircle2, CircleAlert, GitBranch, Loader2, Save, ShieldCheck } from 'lucide-react';
 import { EvidenceBadge } from '../primitives/EvidenceBadge';
 import { TopologyLegend } from '../topology/TopologyLegend';
@@ -11,16 +11,15 @@ import type {
   IncidentTarget,
   RootCauseCandidate,
 } from '../../features/incidents/domain/types';
+import type { IncidentWorkflow } from '../../features/incidents/domain/workflow';
 import {
-  acknowledgeIncident,
-  resolveIncident,
-  updateIncidentNotes,
-  type IncidentWorkflow,
-} from '../../features/incidents/domain/workflow';
-import {
-  asterRedundantLinkIncidentScenario,
-  asterServiceDependencyIncidentScenario,
-} from '../../features/incidents/data/fixtures/asterIncidentScenarios';
+  defaultIncidentId,
+  defaultIncidentRepository,
+  defaultIncidentSiteId,
+  defaultIncidentTenantId,
+} from '../../features/incidents/data/defaultIncidentRepository';
+import type { IncidentSummary } from '../../features/incidents/domain/types';
+import type { IncidentRepository } from '../../features/incidents/data/incidentRepository';
 import { projectIncidentSubgraph } from '../../features/incidents/presentation/projectIncidentSubgraph';
 import { resolveEndpointNodeId } from '../../features/topology/domain/graph';
 import type { TopologySnapshot } from '../../features/topology/domain/types';
@@ -32,8 +31,6 @@ import {
   type AtlasCytoscapeNodeData,
 } from '../../features/topology/rendering/cytoscapeAdapter';
 import { cn } from '../../lib/utils';
-
-type ScenarioKey = 'dependency' | 'redundant';
 
 const IMPACT_LABEL: Record<ImpactClassification, string> = {
   confirmed_affected: 'Confirmed affected',
@@ -136,30 +133,71 @@ function ReasoningPanel({
   analysis,
   selectedCandidate,
   onSelectCandidate,
+  repository,
+  tenantId,
+  siteId,
 }: {
   scenario: IncidentScenario;
   analysis: IncidentAnalysis;
   selectedCandidate: RootCauseCandidate;
   onSelectCandidate: (candidate: RootCauseCandidate) => void;
+  repository: IncidentRepository;
+  tenantId: string;
+  siteId: string;
 }) {
   const [workflow, setWorkflow] = useState<IncidentWorkflow>({
     state: scenario.incident.state,
     notes: '',
+    actualRootCauseEntityId: null,
     actions: [],
   });
   const [draftNotes, setDraftNotes] = useState('');
   const [workflowError, setWorkflowError] = useState<string>();
+  const [mutationPending, setMutationPending] = useState(false);
+  const pendingIdempotencyKeys = useRef<Record<string, string>>({});
   const impacts = new Map<ImpactClassification, typeof analysis.impact>();
   for (const item of analysis.impact) {
     impacts.set(item.classification, [...(impacts.get(item.classification) ?? []), item]);
   }
 
-  const applyWorkflow = (operation: () => IncidentWorkflow) => {
+  useEffect(() => {
+    let active = true;
+    repository.getWorkflow({ tenantId, siteId, incidentId: scenario.incident.id })
+      .then(nextWorkflow => {
+        if (!active) return;
+        setWorkflow(nextWorkflow);
+        setDraftNotes(nextWorkflow.notes);
+      })
+      .catch(error => {
+        if (active) {
+          setWorkflowError(error instanceof Error ? error.message : 'Incident workflow could not be loaded.');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [repository, scenario.incident.id, siteId, tenantId]);
+
+  const applyWorkflow = async (
+    operationName: string,
+    operation: (idempotencyKey: string) => Promise<IncidentWorkflow>,
+  ) => {
+    setMutationPending(true);
     try {
-      setWorkflow(operation());
+      if (typeof crypto.randomUUID !== 'function') {
+        throw new Error('Secure workflow requests are unavailable in this browser context.');
+      }
+      const idempotencyKey = pendingIdempotencyKeys.current[operationName]
+        ?? crypto.randomUUID();
+      pendingIdempotencyKeys.current[operationName] = idempotencyKey;
+      const nextWorkflow = await operation(idempotencyKey);
+      setWorkflow(nextWorkflow);
       setWorkflowError(undefined);
+      delete pendingIdempotencyKeys.current[operationName];
     } catch (error) {
       setWorkflowError(error instanceof Error ? error.message : 'The workflow action failed.');
+    } finally {
+      setMutationPending(false);
     }
   };
 
@@ -295,16 +333,31 @@ function ReasoningPanel({
           <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               type="button"
-              disabled={workflow.state !== 'open'}
-              onClick={() => applyWorkflow(() => acknowledgeIncident(workflow, 'Demo operator', new Date().toISOString()))}
+              disabled={workflow.state !== 'open' || mutationPending}
+              onClick={() => applyWorkflow('acknowledge', idempotencyKey =>
+                repository.acknowledge({
+                  tenantId,
+                  siteId,
+                  incidentId: scenario.incident.id,
+                  expectedState: 'open',
+                  idempotencyKey,
+                }))}
               className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Acknowledge
             </button>
             <button
               type="button"
-              disabled={!draftNotes.trim() || draftNotes === workflow.notes || workflow.state === 'resolved'}
-              onClick={() => applyWorkflow(() => updateIncidentNotes(workflow, draftNotes, 'Demo operator', new Date().toISOString()))}
+              disabled={!draftNotes.trim() || draftNotes === workflow.notes || workflow.state === 'resolved' || mutationPending}
+              onClick={() => applyWorkflow(`notes:${draftNotes}`, idempotencyKey =>
+                repository.updateNotes({
+                  tenantId,
+                  siteId,
+                  incidentId: scenario.incident.id,
+                  expectedState: workflow.state === 'acknowledged' ? 'acknowledged' : 'open',
+                  notes: draftNotes,
+                  idempotencyKey,
+                }))}
               className="flex h-8 items-center justify-center gap-2 border border-[var(--color-border-default)] text-[11px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Save className="h-3.5 w-3.5" aria-hidden="true" /> Save notes
@@ -312,8 +365,22 @@ function ReasoningPanel({
           </div>
           <button
             type="button"
-            disabled={workflow.state !== 'acknowledged' || workflow.notes.trim().length < 10}
-            onClick={() => applyWorkflow(() => resolveIncident(workflow, 'Demo operator', new Date().toISOString()))}
+            disabled={workflow.state !== 'acknowledged' || workflow.notes.trim().length < 10 || mutationPending}
+            onClick={() => applyWorkflow(
+              `resolve:${workflow.notes}:${selectedCandidate.target.kind}:${selectedCandidate.target.id}`,
+              idempotencyKey =>
+              repository.resolve({
+                tenantId,
+                siteId,
+                incidentId: scenario.incident.id,
+                expectedState: 'acknowledged',
+                resolutionNotes: workflow.notes,
+                actualRootCauseEntityId: selectedCandidate.target.kind === 'node'
+                  ? selectedCandidate.target.id
+                  : null,
+                idempotencyKey,
+              }),
+            )}
             className="mt-2 flex h-8 w-full items-center justify-center gap-2 border border-[var(--color-status-ok)]/50 text-[11px] text-[var(--color-status-ok)] hover:bg-[var(--color-status-ok-dim)] disabled:cursor-not-allowed disabled:border-[var(--color-border-default)] disabled:text-[var(--color-text-disabled)]"
           >
             <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> Mark resolved
@@ -330,17 +397,24 @@ function ReasoningPanel({
   );
 }
 
-export function ResolveWorkspace() {
-  const [scenarioKey, setScenarioKey] = useState<ScenarioKey>('dependency');
-  const scenario = scenarioKey === 'dependency'
-    ? asterServiceDependencyIncidentScenario
-    : asterRedundantLinkIncidentScenario;
+function ResolveCaseWorkspace({
+  scenario,
+  repository,
+}: {
+  scenario: IncidentScenario;
+  repository: IncidentRepository;
+}) {
   const analysis = useMemo(() => analyseIncident(scenario), [scenario]);
   const [selectedCandidateKey, setSelectedCandidateKey] = useState<string>();
   const selectedCandidate = analysis.probableCauseCandidates.find(candidate =>
     `${candidate.target.kind}:${candidate.target.id}` === selectedCandidateKey,
   ) ?? analysis.probableCauseCandidates[0];
-  const lens: ActiveAtlasLens = scenarioKey === 'dependency' ? 'dependency' : 'physical';
+  const lens: ActiveAtlasLens = scenario.observations.some(observation => {
+    if (observation.target.kind !== 'relationship') return false;
+    return scenario.snapshot.relationships.some(relationship =>
+      relationship.id === observation.target.id &&
+      relationship.relationshipType === 'physical_adjacency');
+  }) ? 'physical' : 'dependency';
   const projectedSnapshot = useMemo(
     () => projectSnapshotForLens(scenario.snapshot, lens),
     [lens, scenario.snapshot],
@@ -367,29 +441,7 @@ export function ResolveWorkspace() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[var(--color-bg-base)]">
-      <header className="flex h-12 flex-none items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
-        <div>
-          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Resolve with defensible evidence</h2>
-          <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">Probable source, impact, alternatives, limitations, and authorised next checks</p>
-        </div>
-        <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-          Synthetic scenario
-          <select
-            value={scenarioKey}
-            onChange={event => {
-              setScenarioKey(event.target.value as ScenarioKey);
-              setSelectedCandidateKey(undefined);
-            }}
-            className="h-8 border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-2 text-[11px] normal-case tracking-normal text-[var(--color-text-secondary)]"
-          >
-            <option value="dependency">Service dependency failure</option>
-            <option value="redundant">Failed link · alternate path healthy</option>
-          </select>
-        </label>
-      </header>
-
-      <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 flex-1">
         <Timeline scenario={scenario} />
         <div className="relative min-w-0 flex-1">
           {isPending ? (
@@ -402,7 +454,7 @@ export function ResolveWorkspace() {
           ) : (
             <>
               <TopologyMap
-                key={`${scenarioKey}:${lens}`}
+                key={`${scenario.incident.id}:${lens}`}
                 elements={elements}
                 onNodeClick={(node: AtlasCytoscapeNodeData) => {
                   const candidate = analysis.probableCauseCandidates.find(item => item.target.kind === 'node' && item.target.id === node.id);
@@ -430,8 +482,103 @@ export function ResolveWorkspace() {
           analysis={analysis}
           selectedCandidate={selectedCandidate}
           onSelectCandidate={selectCandidate}
+          repository={repository}
+          tenantId={scenario.incident.tenantId}
+          siteId={scenario.incident.siteId}
         />
-      </div>
+    </div>
+  );
+}
+
+export function ResolveWorkspace() {
+  const [incidentId, setIncidentId] = useState(defaultIncidentId);
+  const [incidents, setIncidents] = useState<readonly IncidentSummary[]>([]);
+  const [scenario, setScenario] = useState<IncidentScenario>();
+  const [loadError, setLoadError] = useState<string>();
+
+  useEffect(() => {
+    let active = true;
+    defaultIncidentRepository.listIncidents({
+      tenantId: defaultIncidentTenantId,
+      siteId: defaultIncidentSiteId,
+    })
+      .then(items => {
+        if (active) setIncidents(items);
+      })
+      .catch(error => {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : 'Incidents could not be listed.');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setScenario(undefined);
+    setLoadError(undefined);
+    defaultIncidentRepository.getIncidentCase({
+      tenantId: defaultIncidentTenantId,
+      siteId: defaultIncidentSiteId,
+      incidentId,
+    }).then(nextScenario => {
+      if (active) setScenario(nextScenario);
+    }).catch(error => {
+      if (active) {
+        setLoadError(error instanceof Error ? error.message : 'The incident case could not be loaded.');
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [incidentId]);
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--color-bg-base)]">
+      <header className="flex h-12 flex-none items-center justify-between border-b border-[var(--color-border-subtle)] px-4">
+        <div>
+          <h2 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Resolve with defensible evidence</h2>
+          <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">Probable source, impact, alternatives, limitations, and authorised next checks</p>
+        </div>
+        <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+          {scenario?.snapshot.synthetic === false ? 'Incident' : 'Synthetic scenario'}
+          <select
+            value={incidentId}
+            disabled={incidents.length === 0}
+            onChange={event => setIncidentId(event.target.value)}
+            className="h-8 max-w-[260px] border border-[var(--color-border-default)] bg-[var(--color-bg-base)] px-2 text-[11px] normal-case tracking-normal text-[var(--color-text-secondary)] disabled:opacity-60"
+          >
+            {incidents.length === 0
+              ? <option value={incidentId}>Loading incidents…</option>
+              : incidents.map(incident => (
+                <option key={incident.id} value={incident.id}>{incident.title}</option>
+              ))}
+          </select>
+        </label>
+      </header>
+
+      {loadError ? (
+        <div role="alert" className="flex min-h-0 flex-1 items-center justify-center p-8">
+          <div className="max-w-md border-l-2 border-[var(--color-status-crit)] pl-4">
+            <h3 className="text-[13px] font-semibold text-[var(--color-text-primary)]">Incident unavailable</h3>
+            <p className="mt-2 text-[12px] text-[var(--color-text-secondary)]">{loadError}</p>
+            <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">Validate the incident repository and authenticated scope before retrying.</p>
+          </div>
+        </div>
+      ) : !scenario ? (
+        <div role="status" aria-live="polite" className="flex min-h-0 flex-1 items-center justify-center text-[12px] text-[var(--color-text-secondary)]">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          Loading validated incident evidence…
+        </div>
+      ) : (
+        <ResolveCaseWorkspace
+          key={scenario.incident.id}
+          scenario={scenario}
+          repository={defaultIncidentRepository}
+        />
+      )}
     </div>
   );
 }
