@@ -61,6 +61,8 @@
     --atlas-group-surface: #121920;
     --atlas-group-border: #3b4854;
     --atlas-group-opacity: 0.46;
+    --atlas-muted-node-opacity: 0.48;
+    --atlas-muted-edge-opacity: 0.16;
     --atlas-edge-text: #b5bec7;
     --atlas-edge-physical: #71808d;
     --atlas-edge-layer2: #7e8994;
@@ -132,6 +134,8 @@
     --atlas-group-surface: #e8edef;
     --atlas-group-border: #aeb9c0;
     --atlas-group-opacity: 0.68;
+    --atlas-muted-node-opacity: 0.78;
+    --atlas-muted-edge-opacity: 0.22;
     --atlas-edge-text: #43525d;
     --atlas-edge-physical: #536570;
     --atlas-edge-layer2: #5f6d76;

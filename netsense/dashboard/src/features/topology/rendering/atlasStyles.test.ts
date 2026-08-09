@@ -7,11 +7,15 @@ describe('Atlas renderer environments', () => {
       '--color-bg-canvas': '#fafafa',
       '--atlas-node-text': '#121212',
       '--atlas-group-opacity': '0.72',
+      '--atlas-muted-node-opacity': '0.78',
+      '--atlas-muted-edge-opacity': '0.22',
     }[token] ?? ''));
 
     expect(palette.canvas).toBe('#fafafa');
     expect(palette.nodeText).toBe('#121212');
     expect(palette.groupOpacity).toBe(0.72);
+    expect(palette.mutedNodeOpacity).toBe(0.78);
+    expect(palette.mutedEdgeOpacity).toBe(0.22);
     expect(palette.edgePhysical).toBe('#71808d');
   });
 
@@ -27,9 +31,14 @@ describe('Atlas renderer environments', () => {
     const down = styles.find(style =>
       style.selector === 'edge[relationshipStatus = "down"]');
     const node = styles.find(style => style.selector === 'node.atlas-entity');
+    const mutedNode = styles.find(style => style.selector === 'node.atlas-muted');
+    const mutedEdge = styles.find(style => style.selector === 'edge.atlas-muted');
 
     expect(dependency?.style['line-color']).toBe('--atlas-edge-dependency');
     expect(down?.style['line-color']).toBe('--color-status-crit');
     expect(node?.style.color).toBe('--atlas-node-text');
+    expect(mutedNode?.style.opacity).toBe(0.48);
+    expect(mutedNode?.style['text-opacity']).toBe(1);
+    expect(mutedEdge?.style.opacity).toBe(0.16);
   });
 });

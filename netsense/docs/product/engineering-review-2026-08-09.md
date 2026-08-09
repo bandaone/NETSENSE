@@ -141,9 +141,9 @@ fixtures.
 
 Measured production output:
 
-- main JavaScript: approximately 834.72 kB minified / 253.36 kB gzip;
+- main JavaScript: approximately 835.08 kB minified / 253.46 kB gzip;
 - ELK worker: approximately 1,595.33 kB;
-- CSS: approximately 24.09 kB / 6.09 kB gzip.
+- CSS: approximately 24.22 kB / 6.12 kB gzip.
 
 The Vite chunk warning is valid. Before the 1,000-entity hardening milestone,
 route-split Observe/Investigate/Resolve, load Cytoscape/ELK only for map views,
@@ -173,6 +173,11 @@ uses neutral low-luminance graphite without decorative glow, while Daylight
 uses a low-glare paper canvas with independently strengthened text, borders,
 status colours, and relationship edges. It is not a mathematical colour
 inversion.
+
+Selection focus was separately reviewed in Daylight. Node and label visibility
+is now calibrated independently from edge visibility: unrelated nodes retain
+readable context while unrelated edges recede more strongly. This prevents the
+selected-path treatment from erasing the surrounding network.
 
 Storage is failure-tolerant and contains no sensitive data. Invalid or blocked
 local storage returns to the deliberate Operations Dark default. The small

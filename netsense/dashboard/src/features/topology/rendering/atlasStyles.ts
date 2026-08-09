@@ -14,6 +14,8 @@ export interface AtlasRendererPalette {
   groupSurface: string;
   groupBorder: string;
   groupOpacity: number;
+  mutedNodeOpacity: number;
+  mutedEdgeOpacity: number;
   edgeText: string;
   edgePhysical: string;
   edgeLayer2: string;
@@ -47,6 +49,8 @@ const FALLBACK_PALETTE: AtlasRendererPalette = {
   groupSurface: '#121920',
   groupBorder: '#3b4854',
   groupOpacity: 0.46,
+  mutedNodeOpacity: 0.48,
+  mutedEdgeOpacity: 0.16,
   edgeText: '#b5bec7',
   edgePhysical: '#71808d',
   edgeLayer2: '#7e8994',
@@ -66,7 +70,10 @@ const FALLBACK_PALETTE: AtlasRendererPalette = {
   unknown: '#98a4af',
 };
 
-type PaletteToken = Exclude<keyof AtlasRendererPalette, 'groupOpacity'>;
+type PaletteToken = Exclude<
+  keyof AtlasRendererPalette,
+  'groupOpacity' | 'mutedNodeOpacity' | 'mutedEdgeOpacity'
+>;
 
 const PALETTE_TOKENS: Record<PaletteToken, string> = {
   canvas: '--color-bg-canvas',
@@ -111,6 +118,14 @@ export function createAtlasRendererPalette(
   palette.groupOpacity = Number.isFinite(groupOpacity)
     ? groupOpacity
     : FALLBACK_PALETTE.groupOpacity;
+  const mutedNodeOpacity = Number.parseFloat(readToken('--atlas-muted-node-opacity'));
+  palette.mutedNodeOpacity = Number.isFinite(mutedNodeOpacity)
+    ? mutedNodeOpacity
+    : FALLBACK_PALETTE.mutedNodeOpacity;
+  const mutedEdgeOpacity = Number.parseFloat(readToken('--atlas-muted-edge-opacity'));
+  palette.mutedEdgeOpacity = Number.isFinite(mutedEdgeOpacity)
+    ? mutedEdgeOpacity
+    : FALLBACK_PALETTE.mutedEdgeOpacity;
   return palette;
 }
 
@@ -295,8 +310,15 @@ export function createAtlasStyles(palette: AtlasRendererPalette): StylesheetStyl
       },
     },
     {
-      selector: '.atlas-muted',
-      style: { opacity: 0.14, 'text-opacity': 0.08 },
+      selector: 'node.atlas-muted',
+      style: {
+        opacity: palette.mutedNodeOpacity,
+        'text-opacity': 1,
+      },
+    },
+    {
+      selector: 'edge.atlas-muted',
+      style: { opacity: palette.mutedEdgeOpacity },
     },
     {
       selector: 'edge.atlas-related',

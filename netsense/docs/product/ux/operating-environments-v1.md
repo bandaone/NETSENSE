@@ -34,6 +34,8 @@ to remain legible in offices, field settings, projectors, and demonstrations.
 - Relationship colour remains separate from evidence line style.
 - Down, degraded, and unknown state colours override relationship identity in
   both environments.
+- Context focus must not erase the network: non-context nodes and their names
+  remain readable, while unrelated edges carry the stronger de-emphasis.
 - Text and essential graphics target WCAG 2.2 AA; colour never acts alone.
 - Custom themes and automatic OS-following are outside this contract because
   they would create untested operational interpretations.
