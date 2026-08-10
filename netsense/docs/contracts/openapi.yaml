@@ -5,9 +5,9 @@ info:
   description: >-
     Tenant-scoped API for Atlas topology and incident workflows. The schemas
     are generated from the validated TypeScript domain models and consumed by
-    the authenticated Python API kernel. Production persistence, database RLS,
-    rate limiting, and WebSocket streaming are not implemented yet.
-x-netsense-status: api-kernel-implemented-persistence-planned
+    the authenticated Python platform. PostgreSQL persistence and database RLS
+    are implemented; ingestion, rate limiting, and WebSocket streaming are not.
+x-netsense-status: platform-persistence-implemented-streaming-planned
 servers:
   - url: https://{host}/api/v1
     variables:

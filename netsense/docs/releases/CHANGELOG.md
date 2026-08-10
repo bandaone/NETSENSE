@@ -31,6 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a validly shaped but mis-scoped repository result before disclosure.
 - Cryptography-backed PyJWT verification replacing the advisory-affected
   `python-jose`/`ecdsa` dependency path, with patched test and build tooling.
+- Reversible Alembic migration for topology snapshots, incident cases,
+  analyses, durable idempotency, and append-only workflow actions.
+- Transaction-backed PostgreSQL repository with row locking, atomic mutation
+  and audit writes, pooled transaction-local tenant context, and forced RLS on
+  every tenant-bearing table.
+- File-backed production runtime composition that keeps database credentials
+  and JWT key material out of direct environment values.
+- Real PostgreSQL 15 integration coverage for cross-tenant collisions,
+  policy enforcement, concurrency, rollback, JSON scope constraints, and audit
+  immutability.
+- Expanded Python dependency audit with no known vulnerabilities reported on
+  2026-08-10.
 - Verified product rollout boundary separating implemented frontend from planned platform/probe work.
 - Complete documentation tree (architecture, requirements, UX, testing, ADRs, RFCs)
 - Functional requirements (75 FRs) and non-functional requirements (20 NFRs)

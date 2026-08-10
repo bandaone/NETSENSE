@@ -1,10 +1,11 @@
 # NetSense Architecture
 
-> **Implementation status (2026-08-09):** The repository currently implements
+> **Implementation status (2026-08-10):** The repository currently implements
 > the React Atlas frontend, portable contracts, and an authenticated Python API
-> kernel with a test/development in-memory repository. The probe, durable
-> storage, event processing, streaming, and deployment components below remain
-> approved target architecture, not shipped code. See
+> with a PostgreSQL repository, forced tenant RLS, durable incident workflow,
+> and an append-only action audit. The probe, event processing, metric storage,
+> streaming, and deployment components below remain approved target
+> architecture, not shipped code. See
 > `docs/product/full-product-rollout-v1.md` for the verified rollout boundary.
 
 NetSense is designed as a passive network monitoring platform for converged IT and OT environments. It uses a lightweight probe to capture mirrored traffic, a platform service to normalise and store events, and a web dashboard for visualization and incident management.
@@ -12,9 +13,10 @@ NetSense is designed as a passive network monitoring platform for converged IT a
 ## Key Components
 
 - **Probe:** Go-based single binary that captures traffic via libpcap, normalises protocol data, applies baselines, and forwards events to the platform.
-- **Platform:** Python API kernel currently validates contracts, JWT identity,
-  tenant scope, roles, and incident transitions. PostgreSQL/TimescaleDB storage,
-  event processing, and immutable audit persistence remain planned.
+- **Platform:** Python API validates contracts, JWT identity, tenant scope,
+  roles, and incident transitions. PostgreSQL persists topology and incident
+  state with forced RLS and append-only workflow actions. TimescaleDB metrics,
+  event processing, and PCAP audit persistence remain planned.
 - **Frontend:** React dashboard with topology, incident logs, alert feed, and forensic replay.
 - **Storage:** TimescaleDB hypertables for metrics and PostgreSQL relational tables for devices, users, incidents, and configuration.
 - **Communication:** WireGuard secures probe-to-platform traffic, with role-based API access for users.

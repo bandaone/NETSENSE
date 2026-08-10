@@ -17,8 +17,8 @@ npm run dev
 
 This starts the implemented Atlas dashboard. TimescaleDB, Redis, WireGuard,
 and the Go probe are target-architecture components and are not present yet.
-The Python platform API kernel is separately testable but deliberately has no
-production runtime composition until a durable repository is available.
+The Python platform is separately runnable with its PostgreSQL adapter after
+migration and restricted-role setup; see `../../platform/README.md`.
 
 Open `http://localhost:5173` for the dashboard.
 
@@ -43,12 +43,16 @@ python3 -m venv .venv
 .venv/bin/pip check
 .venv/bin/ruff format --check .
 .venv/bin/ruff check .
-.venv/bin/pytest
+docker compose -f compose.test.yaml up -d --wait
+NETSENSE_TEST_DATABASE_URL='postgresql+asyncpg://netsense_migrator:netsense_migrator_test_only@127.0.0.1:55432/netsense_test' \
+NETSENSE_TEST_APP_DATABASE_URL='postgresql+asyncpg://netsense_app:netsense_app_test_only@127.0.0.1:55432/netsense_test' \
+  .venv/bin/pytest
+docker compose -f compose.test.yaml down
 ```
 
 The dashboard and platform tests load deterministic, validated synthetic
-fixtures. There is no database seed command until the persistence workstream
-is implemented.
+fixtures. PostgreSQL integration fixtures are test-only; there is no
+production seed command or live ingestion path yet.
 
 ### Project Structure
 See `repository-guide.md`.

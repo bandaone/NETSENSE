@@ -9,6 +9,7 @@ from uuid import uuid4
 from fastapi import Body, Depends, FastAPI, Header, Path, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.types import Lifespan
 
 from .auth import JwtAuthenticator, Principal, Role, require_role
 from .contracts import ContractRegistry
@@ -36,6 +37,7 @@ def create_app(
     incident_repository: IncidentRepository,
     now: Callable[[], datetime] | None = None,
     trace_id_factory: Callable[[], str] | None = None,
+    lifespan: Lifespan[FastAPI] | None = None,
 ) -> FastAPI:
     clock = now or (lambda: datetime.now(UTC))
     new_trace_id = trace_id_factory or (lambda: f"trace_{uuid4().hex}")
@@ -45,6 +47,7 @@ def create_app(
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        lifespan=lifespan,
     )
 
     @app.middleware("http")

@@ -1,5 +1,10 @@
 # NetSense Platform API Kernel Engineering Review — 2026-08-09
 
+> **Later persistence update:** PostgreSQL persistence, forced tenant RLS,
+> durable idempotency, append-only incident actions, and production composition
+> were implemented after this API-kernel review. See
+> `platform-persistence-engineering-review-2026-08-10.md`.
+
 **Scope:** authenticated topology and incident HTTP boundary, portable contract
 validation, tenant and role enforcement, repository ports, and the deterministic
 in-memory development adapter.

@@ -182,12 +182,16 @@ def incident_case(*, tenant_id: str = TENANT_ID) -> dict[str, Any]:
     }
 
 
-def incident_analysis() -> dict[str, Any]:
+def incident_analysis(
+    *,
+    tenant_id: str = TENANT_ID,
+    site_id: str = SITE_ID,
+) -> dict[str, Any]:
     return {
         "schemaVersion": "1.0.0",
         "incidentId": INCIDENT_ID,
-        "tenantId": TENANT_ID,
-        "siteId": SITE_ID,
+        "tenantId": tenant_id,
+        "siteId": site_id,
         "analysedAt": "2026-08-09T11:56:00.000Z",
         "probableCauseCandidates": [
             {

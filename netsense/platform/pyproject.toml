@@ -8,9 +8,12 @@ version = "0.1.0"
 description = "Authenticated, tenant-scoped NetSense platform API kernel"
 requires-python = ">=3.12"
 dependencies = [
+  "alembic>=1.13,<2",
+  "asyncpg>=0.29,<1",
   "fastapi>=0.109,<1",
   "jsonschema[format]>=4.21,<5",
   "PyJWT[crypto]>=2.10,<3",
+  "SQLAlchemy[asyncio]>=2.0,<3",
   "uvicorn>=0.27,<1",
 ]
 

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 from copy import deepcopy
 from dataclasses import dataclass, field
 
 from .contracts import ContractRegistry
 from .errors import RepositoryConflictError, RepositoryNotFoundError, RepositoryValidationError
 from .repositories import JsonObject
+from .workflow import entity_exists, operation_fingerprint, require_visible_text
 
 
 @dataclass(slots=True)
@@ -117,7 +116,7 @@ class MemoryPlatformRepository:
         expected_state: str,
         idempotency_key: str,
     ) -> JsonObject:
-        fingerprint = _fingerprint("acknowledge", {"expectedState": expected_state})
+        fingerprint = operation_fingerprint("acknowledge", {"expectedState": expected_state})
         async with self._lock:
             replay = self._replay(tenant_id, incident_id, idempotency_key, fingerprint)
             if replay is not None:
@@ -142,14 +141,19 @@ class MemoryPlatformRepository:
         notes: str,
         idempotency_key: str,
     ) -> JsonObject:
-        fingerprint = _fingerprint("notes", {"expectedState": expected_state, "notes": notes})
+        fingerprint = operation_fingerprint(
+            "notes", {"expectedState": expected_state, "notes": notes}
+        )
         async with self._lock:
             replay = self._replay(tenant_id, incident_id, idempotency_key, fingerprint)
             if replay is not None:
                 return replay
             incident_case = self._require_state(tenant_id, incident_id, expected_state)
-            if not notes.strip():
-                raise RepositoryValidationError("Investigation notes must contain visible text.")
+            require_visible_text(
+                notes,
+                minimum=1,
+                message="Investigation notes must contain visible text.",
+            )
             workflow = self._workflows[(tenant_id, incident_id)]
             workflow.notes = notes
             workflow.actions.append(_action("note_updated", actor, occurred_at))
@@ -174,17 +178,20 @@ class MemoryPlatformRepository:
             "resolutionNotes": resolution_notes,
             "actualRootCauseEntityId": actual_root_cause_entity_id,
         }
-        fingerprint = _fingerprint("resolve", body)
+        fingerprint = operation_fingerprint("resolve", body)
         async with self._lock:
             replay = self._replay(tenant_id, incident_id, idempotency_key, fingerprint)
             if replay is not None:
                 return replay
             incident_case = self._require_state(tenant_id, incident_id, expected_state)
-            if len(resolution_notes.strip()) < 10:
-                raise RepositoryValidationError(
+            require_visible_text(
+                resolution_notes,
+                minimum=10,
+                message=(
                     "Resolution requires at least 10 visible characters of investigation notes."
-                )
-            if actual_root_cause_entity_id is not None and not _entity_exists(
+                ),
+            )
+            if actual_root_cause_entity_id is not None and not entity_exists(
                 incident_case["snapshot"], actual_root_cause_entity_id
             ):
                 raise RepositoryValidationError(
@@ -271,18 +278,5 @@ class MemoryPlatformRepository:
         )
 
 
-def _fingerprint(operation: str, body: JsonObject) -> str:
-    canonical = json.dumps(
-        {"operation": operation, "body": body}, sort_keys=True, separators=(",", ":")
-    )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
 def _action(kind: str, actor: str, occurred_at: str) -> JsonObject:
     return {"kind": kind, "actor": actor, "occurredAt": occurred_at}
-
-
-def _entity_exists(snapshot: JsonObject, entity_id: str) -> bool:
-    return any(node["id"] == entity_id for node in snapshot["nodes"]) or any(
-        relationship["id"] == entity_id for relationship in snapshot["relationships"]
-    )
