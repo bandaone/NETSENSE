@@ -1,7 +1,8 @@
 # NetSense contract boundary
 
-Status: consumed by the authenticated PostgreSQL-backed platform; no topology
-stream, ingestion path, generated frontend client, or probe is implemented
+Status: consumed by the authenticated PostgreSQL-backed platform and Atlas
+HTTP adapter; ordered topology snapshot ingestion is implemented, while no
+topology stream, generated full API client, or physical probe is implemented
 
 The JSON Schemas in this directory are generated from the same strict Zod
 schemas used at the dashboard repository boundaries. They are the portable

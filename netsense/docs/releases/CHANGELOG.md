@@ -41,6 +41,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real PostgreSQL 15 integration coverage for cross-tenant collisions,
   policy enforcement, concurrency, rollback, JSON scope constraints, and audit
   immutability.
+- Authenticated, probe-only topology snapshot ingestion with strict tenant,
+  site, collector, sequence, observation-time, and idempotency enforcement.
+- Atomic topology snapshot, cursor, and receipt persistence with authoritative
+  collector protection and forced RLS on the new ingestion tables.
+- Opt-in live Atlas HTTP topology loading with response-contract and scope
+  validation, cancellation, bounded user retry, and an explicit live/fixture
+  source indicator.
+- RFC-009 and cross-layer tests defining the first full-snapshot ingestion
+  boundary; topology diffs, collector handover, and payload/rate controls remain
+  separate release gates.
 - Expanded Python dependency audit with no known vulnerabilities reported on
   2026-08-10.
 - Verified product rollout boundary separating implemented frontend from planned platform/probe work.

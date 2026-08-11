@@ -10,6 +10,7 @@ from .errors import ContractViolationError, Violation
 
 CONTRACT_FILES = {
     "topology_snapshot": "topology-snapshot-schema.json",
+    "topology_ingestion_receipt": "topology-ingestion-receipt-schema.json",
     "incident_case": "incident-case-schema.json",
     "incident_summary": "incident-summary-schema.json",
     "incident_analysis": "incident-analysis-schema.json",

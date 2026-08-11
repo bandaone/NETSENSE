@@ -3,10 +3,17 @@ from __future__ import annotations
 import asyncio
 from copy import deepcopy
 from dataclasses import dataclass, field
+from typing import Literal
 
 from .contracts import ContractRegistry
 from .errors import RepositoryConflictError, RepositoryNotFoundError, RepositoryValidationError
-from .repositories import JsonObject
+from .repositories import JsonObject, TopologyIngestionCommand
+from .topology_ingestion import (
+    TopologyCursor,
+    classify_topology_ingestion,
+    make_ingestion_receipt,
+    validate_topology_ingestion,
+)
 from .workflow import entity_exists, operation_fingerprint, require_visible_text
 
 
@@ -40,6 +47,9 @@ class MemoryPlatformRepository:
         self._analyses: dict[tuple[str, str], JsonObject] = {}
         self._workflows: dict[tuple[str, str], _Workflow] = {}
         self._idempotency: dict[tuple[str, str, str], _IdempotencyResult] = {}
+        self._topology_cursors: dict[tuple[str, str, str], TopologyCursor] = {}
+        self._topology_receipts: dict[tuple[str, str, str], _IdempotencyResult] = {}
+        self._snapshot_ids: set[tuple[str, str]] = set()
         self._lock = asyncio.Lock()
 
         for raw_snapshot in topology_snapshots:
@@ -50,6 +60,7 @@ class MemoryPlatformRepository:
                     "Only one current topology snapshot is allowed per tenant and site."
                 )
             self._topologies[key] = snapshot
+            self._snapshot_ids.add((snapshot["tenantId"], snapshot["snapshotId"]))
 
         for raw_case in incident_cases:
             incident_case = contracts.validate("incident_case", raw_case)
@@ -80,6 +91,81 @@ class MemoryPlatformRepository:
         if snapshot is None or (observed_at is not None and snapshot["observedAt"] != observed_at):
             raise RepositoryNotFoundError
         return deepcopy(snapshot)
+
+    async def ingest_snapshot(self, command: TopologyIngestionCommand) -> JsonObject:
+        validated = validate_topology_ingestion(command)
+        receipt_key = (command.tenant_id, command.collector_id, command.idempotency_key)
+        cursor_key = (command.tenant_id, command.site_id, command.collector_id)
+        async with self._lock:
+            replay = self._topology_receipts.get(receipt_key)
+            if replay is not None:
+                if replay.fingerprint != validated.fingerprint:
+                    raise RepositoryConflictError(
+                        "IDEMPOTENCY_CONFLICT",
+                        "The idempotency key was already used for different topology content.",
+                    )
+                return deepcopy(replay.response)
+
+            if any(
+                tenant_id == command.tenant_id
+                and site_id == command.site_id
+                and collector_id != command.collector_id
+                for tenant_id, site_id, collector_id in self._topology_cursors
+            ):
+                raise RepositoryConflictError(
+                    "TOPOLOGY_COLLECTOR_CONFLICT",
+                    "The site already has a different authoritative snapshot collector.",
+                )
+
+            cursor = self._topology_cursors.get(cursor_key)
+            classification = classify_topology_ingestion(command, validated, cursor)
+            if classification == "duplicate":
+                return self._remember_topology_receipt(
+                    command,
+                    receipt_key,
+                    validated.fingerprint,
+                    status="duplicate",
+                )
+
+            snapshot_key = (command.tenant_id, command.snapshot["snapshotId"])
+            if snapshot_key in self._snapshot_ids:
+                raise RepositoryConflictError(
+                    "TOPOLOGY_SNAPSHOT_ID_CONFLICT",
+                    "The topology snapshot identifier was already used.",
+                )
+
+            self._topologies[(command.tenant_id, command.site_id)] = deepcopy(command.snapshot)
+            self._snapshot_ids.add(snapshot_key)
+            self._topology_cursors[cursor_key] = TopologyCursor(
+                sequence=command.sequence,
+                snapshot_id=command.snapshot["snapshotId"],
+                observed_at=validated.observed_at,
+                fingerprint=validated.fingerprint,
+            )
+            return self._remember_topology_receipt(
+                command,
+                receipt_key,
+                validated.fingerprint,
+                status="accepted",
+            )
+
+    def _remember_topology_receipt(
+        self,
+        command: TopologyIngestionCommand,
+        key: tuple[str, str, str],
+        fingerprint: str,
+        *,
+        status: Literal["accepted", "duplicate"],
+    ) -> JsonObject:
+        response = self._contracts.validate(
+            "topology_ingestion_receipt",
+            make_ingestion_receipt(command, status=status),
+        )
+        self._topology_receipts[key] = _IdempotencyResult(
+            fingerprint=fingerprint,
+            response=deepcopy(response),
+        )
+        return deepcopy(response)
 
     async def list_incidents(
         self,

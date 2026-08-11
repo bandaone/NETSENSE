@@ -40,6 +40,7 @@ def make_app(keys: SigningKeys, repo: MemoryPlatformRepository | None = None):
         authenticator=authenticator(keys),
         contracts=contracts,
         topology_repository=configured_repository,
+        topology_ingestion_repository=configured_repository,
         incident_repository=configured_repository,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_platform_test_001",
@@ -57,6 +58,23 @@ async def client_for(
 
 def auth_headers(keys: SigningKeys, *, role: str = "engineer", tenant_id: str = TENANT_ID):
     return {"Authorization": f"Bearer {make_token(keys, role=role, tenant_id=tenant_id)}"}
+
+
+def probe_headers(
+    keys: SigningKeys,
+    *,
+    idempotency_key: str,
+    sequence: int,
+    tenant_id: str = TENANT_ID,
+) -> dict[str, str]:
+    return {
+        "Authorization": (
+            "Bearer "
+            + make_token(keys, role="probe", tenant_id=tenant_id, subject="collector:test")
+        ),
+        "Idempotency-Key": idempotency_key,
+        "X-Topology-Sequence": str(sequence),
+    }
 
 
 @pytest.mark.asyncio
@@ -87,6 +105,137 @@ async def test_reads_contract_validated_topology_incidents_and_analysis(keys: Si
     assert incidents.json()["items"][0]["id"] == INCIDENT_ID
     assert incident.json()["snapshot"]["site"]["id"] == SITE_ID
     assert analysis.json()["probableCauseCandidates"][0]["target"]["id"] == NODE_ID
+
+
+@pytest.mark.asyncio
+async def test_probe_ingests_ordered_snapshot_and_operator_reads_live_result(
+    keys: SigningKeys,
+) -> None:
+    snapshot = topology_snapshot(snapshot_id="snapshot:live:001")
+    headers = probe_headers(
+        keys,
+        idempotency_key="topology-ingestion-key-0001",
+        sequence=41,
+    )
+    async with client_for(keys) as client:
+        accepted = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            json=snapshot,
+        )
+        replay = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            json=snapshot,
+        )
+        duplicate = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=probe_headers(
+                keys,
+                idempotency_key="topology-ingestion-key-0002",
+                sequence=41,
+            ),
+            json=snapshot,
+        )
+        current = await client.get(
+            f"/api/v1/sites/{SITE_ID}/topology",
+            headers=auth_headers(keys),
+        )
+
+    assert accepted.status_code == replay.status_code == 201
+    assert accepted.json() == replay.json()
+    assert accepted.json()["status"] == "accepted"
+    assert accepted.json()["collectorId"] == "collector:test"
+    assert duplicate.status_code == 200
+    assert duplicate.json()["status"] == "duplicate"
+    assert current.json()["snapshotId"] == snapshot["snapshotId"]
+
+
+@pytest.mark.asyncio
+async def test_probe_and_operator_roles_are_separated(keys: SigningKeys) -> None:
+    snapshot = topology_snapshot(snapshot_id="snapshot:role:001")
+    async with client_for(keys) as client:
+        operator_ingestion = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers={
+                **auth_headers(keys),
+                "Idempotency-Key": "topology-role-key-000001",
+                "X-Topology-Sequence": "1",
+            },
+            json=snapshot,
+        )
+        probe_read = await client.get(
+            f"/api/v1/sites/{SITE_ID}/topology",
+            headers=probe_headers(
+                keys,
+                idempotency_key="topology-role-key-000002",
+                sequence=1,
+            ),
+        )
+
+    assert operator_ingestion.status_code == 403
+    assert probe_read.status_code == 403
+    assert operator_ingestion.json()["code"] == probe_read.json()["code"] == "FORBIDDEN"
+
+
+@pytest.mark.asyncio
+async def test_ingestion_rejects_scope_collector_and_synthetic_claims(keys: SigningKeys) -> None:
+    wrong_tenant = topology_snapshot(
+        tenant_id=OTHER_TENANT_ID,
+        snapshot_id="snapshot:wrong-tenant:001",
+    )
+    wrong_collector = topology_snapshot(
+        snapshot_id="snapshot:wrong-collector:001",
+        collector_id="collector:forged",
+    )
+    synthetic = topology_snapshot(snapshot_id="snapshot:synthetic:001")
+    synthetic.update(
+        {
+            "synthetic": True,
+            "syntheticDataNotice": "Synthetic test data.",
+        }
+    )
+    async with client_for(keys) as client:
+        responses = []
+        for index, snapshot in enumerate((wrong_tenant, wrong_collector, synthetic), start=1):
+            responses.append(
+                await client.post(
+                    f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+                    headers=probe_headers(
+                        keys,
+                        idempotency_key=f"topology-invalid-key-000{index}",
+                        sequence=index,
+                    ),
+                    json=snapshot,
+                )
+            )
+
+    assert [response.status_code for response in responses] == [422, 422, 422]
+    assert all(response.json()["code"] == "VALIDATION_ERROR" for response in responses)
+    assert OTHER_TENANT_ID not in str(responses[0].json())
+
+
+@pytest.mark.asyncio
+async def test_ingestion_requires_bounded_delivery_headers(keys: SigningKeys) -> None:
+    token = make_token(keys, role="probe", subject="collector:test")
+    async with client_for(keys) as client:
+        missing = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers={"Authorization": f"Bearer {token}"},
+            json=topology_snapshot(snapshot_id="snapshot:missing-headers:001"),
+        )
+        invalid_sequence = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": "topology-invalid-sequence-01",
+                "X-Topology-Sequence": "0",
+            },
+            json=topology_snapshot(snapshot_id="snapshot:invalid-sequence:001"),
+        )
+
+    assert missing.status_code == invalid_sequence.status_code == 422
+    assert missing.json()["code"] == invalid_sequence.json()["code"] == "VALIDATION_ERROR"
 
 
 @pytest.mark.asyncio
@@ -316,6 +465,7 @@ async def test_repository_scope_leak_is_blocked_as_an_internal_contract_failure(
         authenticator=authenticator(keys),
         contracts=contracts,
         topology_repository=_CrossScopeTopologyRepository(),
+        topology_ingestion_repository=incident_repo,
         incident_repository=incident_repo,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_scope_failure_001",
@@ -345,6 +495,7 @@ async def test_analysis_scope_leak_is_blocked_as_an_internal_contract_failure(
         authenticator=authenticator(keys),
         contracts=contracts,
         topology_repository=configured_repository,
+        topology_ingestion_repository=configured_repository,
         incident_repository=_CrossScopeAnalysisRepository(configured_repository),
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_analysis_scope_failure_001",
@@ -369,6 +520,7 @@ async def test_unexpected_repository_failure_is_non_disclosing(keys: SigningKeys
         authenticator=authenticator(keys),
         contracts=contracts,
         topology_repository=_FailingTopologyRepository(),
+        topology_ingestion_repository=incident_repo,
         incident_repository=incident_repo,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_repository_failure_001",

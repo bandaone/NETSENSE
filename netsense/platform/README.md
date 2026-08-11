@@ -1,7 +1,8 @@
 # NetSense platform API kernel
 
-Status: authenticated service boundary and PostgreSQL persistence implemented
-and tested; no probe ingestion or topology streaming yet.
+Status: authenticated service boundary, ordered topology snapshot ingestion,
+and PostgreSQL persistence implemented and tested; no physical probe or
+topology streaming yet.
 
 This package turns the Atlas contracts into an authenticated FastAPI boundary
 with a transaction-backed PostgreSQL adapter. TimescaleDB is deliberately not
@@ -18,6 +19,8 @@ harness.
 - Cross-object topology and incident invariant validation.
 - Non-disclosing RFC 7807 problem responses with server-generated trace IDs.
 - Tenant/site topology and incident repository ports.
+- Probe-only, contract-validated, ordered and idempotent topology snapshot
+  ingestion.
 - Idempotent, expected-state incident acknowledgement, notes, and resolution.
 - Server-derived actor identity and authoritative timestamps.
 - Response-scope validation that blocks a leaking repository adapter.
@@ -28,6 +31,7 @@ harness.
 - Row-locked, atomic workflow transitions and connection-pool-safe `SET LOCAL`
   tenant context.
 - JSONB identity and scope constraints independent of application validation.
+- Per-probe sequence cursors and ingestion receipts protected by forced RLS.
 - File-backed production composition for database credentials and JWT public
   key material.
 
@@ -70,10 +74,13 @@ sets its password through the deployment secret mechanism, then grants only:
 
 ```sql
 GRANT USAGE ON SCHEMA public TO netsense_app;
-GRANT SELECT ON topology_snapshots, incident_cases, incident_analyses,
+GRANT SELECT ON topology_snapshots, topology_ingestion_state,
+  topology_ingestion_receipts, incident_cases, incident_analyses,
   incident_actions, idempotency_records TO netsense_app;
-GRANT INSERT ON incident_actions, idempotency_records TO netsense_app;
-GRANT UPDATE ON incident_cases TO netsense_app;
+GRANT INSERT ON topology_snapshots, topology_ingestion_state,
+  topology_ingestion_receipts, incident_actions, idempotency_records
+  TO netsense_app;
+GRANT UPDATE ON topology_ingestion_state, incident_cases TO netsense_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO netsense_app;
 ```
 
@@ -100,8 +107,9 @@ uvicorn netsense_platform.runtime:create_runtime_app_from_environment --factory
 - Database migrations intentionally do not create login roles or embed
   credentials. Deployment automation must create and grant the runtime role.
 - WebSocket topology streaming, cursor pagination, rate limiting, readiness
-  checks, event/topology ingestion, TimescaleDB metric storage, and probe
-  ingestion remain follow-on slices.
+  checks, event and metric ingestion, TimescaleDB metric storage, and the
+  physical probe remain follow-on slices. Snapshot ingestion is implemented;
+  topology-diff ingestion is not.
 - Append-only storage currently covers incident workflow actions, not the
   future PCAP access audit required by NFR-SEC-005.
 - `pip-audit -r requirements-dev.lock` reported no known vulnerabilities on

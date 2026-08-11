@@ -38,3 +38,14 @@ export const incidentResolutionRequestSchema = z.object({
   resolutionNotes: z.string().min(10).max(10_000),
   actualRootCauseEntityId: z.string().min(1).max(256).nullable(),
 }).strict();
+
+export const topologyIngestionReceiptSchema = z.object({
+  schemaVersion: z.literal('1.0.0'),
+  status: z.enum(['accepted', 'duplicate']),
+  tenantId: z.string().min(1),
+  siteId: z.string().min(1),
+  collectorId: z.string().min(1),
+  sequence: z.number().int().positive(),
+  snapshotId: z.string().min(1),
+  acceptedAt: z.string().datetime(),
+}).strict();

@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 JsonObject = dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class TopologyIngestionCommand:
+    tenant_id: str
+    site_id: str
+    collector_id: str
+    sequence: int
+    idempotency_key: str
+    accepted_at: str
+    snapshot: JsonObject
 
 
 class TopologyRepository(Protocol):
@@ -12,6 +24,10 @@ class TopologyRepository(Protocol):
         site_id: str,
         observed_at: str | None,
     ) -> JsonObject: ...
+
+
+class TopologyIngestionRepository(Protocol):
+    async def ingest_snapshot(self, command: TopologyIngestionCommand) -> JsonObject: ...
 
 
 class IncidentRepository(Protocol):

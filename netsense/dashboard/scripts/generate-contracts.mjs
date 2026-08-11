@@ -20,6 +20,7 @@ const contractDefinitions = [
   ['incident-acknowledgement-request-schema.json', 'incidentAcknowledgementRequestSchema', 'NetSense Incident Acknowledgement Request', 'Expected-state precondition for an idempotent acknowledgement.'],
   ['incident-notes-request-schema.json', 'incidentNotesRequestSchema', 'NetSense Incident Notes Request', 'Expected-state precondition and durable investigation notes.'],
   ['incident-resolution-request-schema.json', 'incidentResolutionRequestSchema', 'NetSense Incident Resolution Request', 'Expected-state precondition, resolution evidence, and optional actual source.'],
+  ['topology-ingestion-receipt-schema.json', 'topologyIngestionReceiptSchema', 'NetSense Topology Ingestion Receipt', 'Server-authoritative receipt for ordered idempotent topology snapshot ingestion.'],
   ['problem-schema.json', 'problemDetailsSchema', 'NetSense Problem Details', 'Non-disclosing API problem response with trace correlation.'],
 ];
 

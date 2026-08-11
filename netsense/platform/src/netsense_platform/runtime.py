@@ -65,6 +65,7 @@ def create_runtime_app(settings: RuntimeSettings) -> FastAPI:
         authenticator=authenticator,
         contracts=contracts,
         topology_repository=repository,
+        topology_ingestion_repository=repository,
         incident_repository=repository,
         lifespan=lifespan,
     )

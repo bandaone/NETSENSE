@@ -5,9 +5,10 @@ info:
   description: >-
     Tenant-scoped API for Atlas topology and incident workflows. The schemas
     are generated from the validated TypeScript domain models and consumed by
-    the authenticated Python platform. PostgreSQL persistence and database RLS
-    are implemented; ingestion, rate limiting, and WebSocket streaming are not.
-x-netsense-status: platform-persistence-implemented-streaming-planned
+    the authenticated Python platform. PostgreSQL persistence, database RLS,
+    and ordered topology snapshot ingestion are implemented; rate limiting and
+    WebSocket streaming are not.
+x-netsense-status: topology-snapshot-ingestion-implemented-streaming-planned
 servers:
   - url: https://{host}/api/v1
     variables:
@@ -36,6 +37,37 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /sites/{siteId}/topology/snapshots:
+    post:
+      operationId: ingestTopologySnapshot
+      summary: Persist one ordered topology snapshot from an authenticated probe
+      x-required-roles: [probe]
+      parameters:
+        - $ref: '#/components/parameters/SiteId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/TopologySequence'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TopologySnapshot' }
+      responses:
+        '200':
+          description: Exact snapshot delivery was already accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TopologyIngestionReceipt' }
+        '201':
+          description: Snapshot accepted and made available to tenant-scoped reads
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TopologyIngestionReceipt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
         '429': { $ref: '#/components/responses/RateLimited' }
 
@@ -221,6 +253,11 @@ components:
       in: header
       required: true
       schema: { type: string, minLength: 16, maxLength: 200 }
+    TopologySequence:
+      name: X-Topology-Sequence
+      in: header
+      required: true
+      schema: { type: integer, minimum: 1, maximum: 9007199254740991 }
 
   responses:
     Unauthorized:
@@ -264,6 +301,8 @@ components:
       $ref: './topology-snapshot-schema.json'
     TopologyDiff:
       $ref: './topology-diff-schema.json'
+    TopologyIngestionReceipt:
+      $ref: './topology-ingestion-receipt-schema.json'
     IncidentState:
       type: string
       enum: [open, acknowledged, resolved]

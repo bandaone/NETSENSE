@@ -17,6 +17,37 @@ topology_snapshots = sa.Table(
     sa.PrimaryKeyConstraint("tenant_id", "snapshot_id"),
 )
 
+topology_ingestion_state = sa.Table(
+    "topology_ingestion_state",
+    metadata,
+    sa.Column("tenant_id", sa.Text(), nullable=False),
+    sa.Column("site_id", sa.Text(), nullable=False),
+    sa.Column("collector_id", sa.Text(), nullable=False),
+    sa.Column("last_sequence", sa.BigInteger(), nullable=False),
+    sa.Column("last_snapshot_id", sa.Text(), nullable=False),
+    sa.Column("last_observed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("last_fingerprint", sa.String(length=64), nullable=False),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(
+        ["tenant_id", "last_snapshot_id"],
+        ["topology_snapshots.tenant_id", "topology_snapshots.snapshot_id"],
+        ondelete="RESTRICT",
+    ),
+    sa.PrimaryKeyConstraint("tenant_id", "site_id", "collector_id"),
+)
+
+topology_ingestion_receipts = sa.Table(
+    "topology_ingestion_receipts",
+    metadata,
+    sa.Column("tenant_id", sa.Text(), nullable=False),
+    sa.Column("collector_id", sa.Text(), nullable=False),
+    sa.Column("idempotency_key", sa.Text(), nullable=False),
+    sa.Column("fingerprint", sa.String(length=64), nullable=False),
+    sa.Column("response", JSONB(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.PrimaryKeyConstraint("tenant_id", "collector_id", "idempotency_key"),
+)
+
 incident_cases = sa.Table(
     "incident_cases",
     metadata,

@@ -13,27 +13,33 @@ import { TopologyDataContext, type TopologyDataState, useTopologyData } from './
 export function TopologyDataProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<TopologySnapshot>();
   const [error, setError] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
-    defaultTopologyRepository.getSnapshot(defaultTopologyRequest)
+    const controller = new AbortController();
+    setError(undefined);
+    defaultTopologyRepository.getSnapshot(defaultTopologyRequest, controller.signal)
       .then(nextSnapshot => {
         if (active) setSnapshot(nextSnapshot);
       })
       .catch(reason => {
+        if (reason instanceof DOMException && reason.name === 'AbortError') return;
         if (active) {
           setError(reason instanceof Error ? reason.message : 'Topology data could not be loaded.');
         }
       });
     return () => {
       active = false;
+      controller.abort();
     };
-  }, []);
+  }, [attempt]);
 
   const value: TopologyDataState = {
     snapshot,
     error,
     isLoading: !snapshot && !error,
+    reload: () => setAttempt(value => value + 1),
   };
 
   return <TopologyDataContext.Provider value={value}>{children}</TopologyDataContext.Provider>;
@@ -44,7 +50,7 @@ interface TopologyDataBoundaryProps {
 }
 
 export function TopologyDataBoundary({ children }: TopologyDataBoundaryProps) {
-  const { snapshot, error } = useTopologyData();
+  const { snapshot, error, reload } = useTopologyData();
 
   if (error) {
     return (
@@ -55,6 +61,13 @@ export function TopologyDataBoundary({ children }: TopologyDataBoundaryProps) {
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             Validate the data source or repository adapter before retrying.
           </p>
+          <button
+            type="button"
+            onClick={reload}
+            className="mt-4 border border-[var(--color-border-default)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+          >
+            Retry validated load
+          </button>
         </div>
       </div>
     );

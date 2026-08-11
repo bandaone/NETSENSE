@@ -6,6 +6,11 @@ This is the governing prompt for the NetSense topology and visualisation workstr
 
 Work from the repository root. Read the named project documents and inspect the current source before proposing changes. Treat the repository as the source of current implementation truth and this prompt as the governing product and engineering direction.
 
+The customer outcomes, service boundaries, commercial proof gates, and work
+acceptance test in `docs/product/service-delivery-charter-v1.md` govern all
+NetSense workstreams. When this Atlas-specific prompt conflicts with that
+charter, preserve implementation truth and escalate the conflict explicitly.
+
 ---
 
 # 1. Your role
@@ -36,22 +41,30 @@ Operate as an engineering partner, not as a code generator.
 
 # 2. Repository truth and starting point
 
-The current repository is in a pre-MVP state.
+The current repository is pre-release. It contains a production-built
+React/TypeScript Atlas reference frontend, portable contracts, an
+authenticated Python API kernel, and PostgreSQL persistence with forced tenant
+row-level security. Atlas uses validated synthetic topology and incident cases
+through explicit repository boundaries. Its investigation controls, incident
+reasoning, layout, lenses, search, filters, inspection, and session workflow
+behaviour are implemented and tested.
 
-The implemented application is primarily:
+It is not yet an operational network-intelligence product. Ordered topology
+snapshot ingestion and an opt-in authenticated Atlas HTTP adapter exist, but
+the physical probe, live evidence collectors, topology-diff streaming,
+metrics, alert delivery, production identity flow, and packet forensics do not.
+The exact current boundary is maintained in
+`docs/product/full-product-rollout-v1.md`; do not replace it with assumptions
+from this prompt.
 
-- React;
-- TypeScript;
-- Vite;
-- Tailwind CSS;
-- Cytoscape.js;
-- cytoscape-fcose;
-- mock topology and incident data.
-
-The current dashboard is a useful concept prototype, but it is not yet an operational network-intelligence product. Several controls are visual only, the topology is based on hard-coded fixture conclusions, and the current map does not yet implement the full intent described by the documentation.
+The implemented frontend stack includes React, TypeScript, Vite, Tailwind CSS,
+Cytoscape.js, fCoSE, and ELK. Synthetic demonstrations must remain visibly
+labelled and must use the same validated contracts expected from live data.
 
 Before modifying code, inspect at minimum:
 
+- `docs/product/service-delivery-charter-v1.md`
+- `docs/product/full-product-rollout-v1.md`
 - `docs/architecture.md`
 - `docs/engineering-methodology.md`
 - `docs/product/ux/topology-map-design.md`
@@ -67,7 +80,11 @@ Before modifying code, inspect at minimum:
 - `dashboard/src/components/topology/TopologyMap.tsx`
 - `dashboard/src/components/topology/NodeDetailPanel.tsx`
 - `dashboard/src/screens/dashboard/index.tsx`
-- `dashboard/src/lib/mockData.ts`
+- `dashboard/src/features/topology/data/fixtures/healthyAsterEnterprise.ts`
+- `dashboard/src/features/incidents/data/fixtures/asterIncidentScenarios.ts`
+- `dashboard/src/features/topology/domain/`
+- `dashboard/src/features/topology/layout/`
+- `dashboard/src/features/topology/rendering/`
 - `dashboard/src/design/tokens.css`
 - `dashboard/package.json`
 
@@ -93,6 +110,12 @@ The primary design loop is:
 > Observe → Understand → Investigate → Act
 
 Every visual element and interaction must support this loop.
+
+Atlas is the evidence and reasoning workspace within the wider NetSense
+service. A visually successful map is insufficient unless it helps deliver a
+traceable Network Truth Assessment, Continuous Atlas Assurance, Managed
+Network Intelligence, Passive IT/OT Visibility, or Incident Evidence and
+Replay outcome defined by the service charter.
 
 ---
 

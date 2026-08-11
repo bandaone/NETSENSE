@@ -123,7 +123,7 @@ export function Shell({
             <div className="text-[12px] font-medium text-[var(--color-text-secondary)]">Validated source</div>
             <div className="mt-1 flex items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
               <span className="text-[var(--color-status-ok)]" aria-hidden="true">●</span>
-              Synthetic scenario
+              {snapshot.synthetic ? 'Synthetic scenario' : 'Live platform snapshot'}
             </div>
           </div>
         )}
@@ -155,10 +155,18 @@ export function Shell({
           </div>
           <div className="ml-4 flex flex-none items-center gap-3">
             <OperatingEnvironmentSelector value={environment} onChange={setEnvironment} />
-            {snapshot?.synthetic && (
+            {snapshot && (
               <div className="hidden items-center gap-2 text-[12px] text-[var(--color-text-secondary)] xl:flex">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-status-unknown)]" aria-hidden="true" />
-                Synthetic demonstration
+                <span
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    snapshot.synthetic
+                      ? 'bg-[var(--color-status-unknown)]'
+                      : 'bg-[var(--color-status-ok)]',
+                  )}
+                  aria-hidden="true"
+                />
+                {snapshot.synthetic ? 'Synthetic demonstration' : 'Live platform evidence'}
               </div>
             )}
           </div>

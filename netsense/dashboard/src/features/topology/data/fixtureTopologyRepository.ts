@@ -20,6 +20,21 @@ const scopeEnvelopeSchema = z.object({
   site: z.object({ id: z.string() }).passthrough(),
 }).passthrough();
 
+export function assertTopologyScope(
+  snapshot: unknown,
+  request: TopologySnapshotRequest,
+): void {
+  const scope = scopeEnvelopeSchema.safeParse(snapshot);
+  if (
+    !scope.success
+    || scope.data.tenantId !== request.tenantId
+    || scope.data.organisation.id !== request.organisationId
+    || scope.data.site.id !== request.siteId
+  ) {
+    throw new TopologyNotFoundError(request.siteId);
+  }
+}
+
 export function parseTopologySnapshot(rawSnapshot: unknown): TopologySnapshot {
   const versionEnvelope = versionEnvelopeSchema.safeParse(rawSnapshot);
   if (!versionEnvelope.success) {
@@ -46,20 +61,15 @@ export class FixtureTopologyRepository implements TopologyRepository {
   constructor(private readonly fixtures: ReadonlyMap<string, unknown>) {}
 
   async getSnapshot(request: TopologySnapshotRequest): Promise<TopologySnapshot> {
+    if (!request.scenarioId) {
+      throw new TopologyNotFoundError(request.siteId);
+    }
     const fixture = this.fixtures.get(request.scenarioId);
     if (!fixture) {
       throw new TopologyNotFoundError(request.scenarioId);
     }
 
-    const scope = scopeEnvelopeSchema.safeParse(fixture);
-    if (
-      !scope.success ||
-      scope.data.tenantId !== request.tenantId ||
-      scope.data.organisation.id !== request.organisationId ||
-      scope.data.site.id !== request.siteId
-    ) {
-      throw new TopologyNotFoundError(request.scenarioId);
-    }
+    assertTopologyScope(fixture, request);
     return parseTopologySnapshot(fixture);
   }
 }

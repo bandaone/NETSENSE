@@ -52,7 +52,8 @@ docker compose -f compose.test.yaml down
 
 The dashboard and platform tests load deterministic, validated synthetic
 fixtures. PostgreSQL integration fixtures are test-only; there is no
-production seed command or live ingestion path yet.
+production seed command or physical probe yet. The ordered live topology
+snapshot path must receive only authorised, non-synthetic probe evidence.
 
 ### Project Structure
 See `repository-guide.md`.

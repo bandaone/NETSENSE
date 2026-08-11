@@ -5,6 +5,7 @@ export interface TopologyDataState {
   snapshot: TopologySnapshot | undefined;
   error: string | undefined;
   isLoading: boolean;
+  reload: () => void;
 }
 
 export const TopologyDataContext = createContext<TopologyDataState | undefined>(undefined);

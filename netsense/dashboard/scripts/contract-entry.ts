@@ -11,4 +11,5 @@ export {
   incidentNotesRequestSchema,
   incidentResolutionRequestSchema,
   problemDetailsSchema,
+  topologyIngestionReceiptSchema,
 } from '../src/features/contracts/apiSchemas';

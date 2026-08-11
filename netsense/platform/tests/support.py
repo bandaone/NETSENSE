@@ -87,11 +87,17 @@ def contract_registry() -> ContractRegistry:
     return ContractRegistry(contracts)
 
 
-def topology_snapshot(*, tenant_id: str = TENANT_ID, site_id: str = SITE_ID) -> dict[str, Any]:
-    timestamp = "2026-08-09T11:55:00.000Z"
+def topology_snapshot(
+    *,
+    tenant_id: str = TENANT_ID,
+    site_id: str = SITE_ID,
+    snapshot_id: str | None = None,
+    timestamp: str = "2026-08-09T11:55:00.000Z",
+    collector_id: str = "collector:test",
+) -> dict[str, Any]:
     return {
         "schemaVersion": "1.0.0",
-        "snapshotId": f"snapshot:{tenant_id}:{site_id}:1",
+        "snapshotId": snapshot_id or f"snapshot:{tenant_id}:{site_id}:1",
         "tenantId": tenant_id,
         "organisation": {"id": tenant_id, "name": "University Network"},
         "site": {"id": site_id, "organisationId": tenant_id, "name": "Great East Road Campus"},
@@ -140,11 +146,11 @@ def topology_snapshot(*, tenant_id: str = TENANT_ID, site_id: str = SITE_ID) -> 
         "evidence": [
             {
                 "id": EVIDENCE_ID,
-                "sourceType": "simulation",
-                "collectorId": "collector:test",
+                "sourceType": "snmp",
+                "collectorId": collector_id,
                 "observedAt": timestamp,
                 "expiresAt": None,
-                "summary": "Synthetic contract fixture for platform tests.",
+                "summary": "Contract fixture representing a collected health observation.",
                 "confidenceContribution": 0.96,
                 "limitations": ["Not collected from a live network."],
             }

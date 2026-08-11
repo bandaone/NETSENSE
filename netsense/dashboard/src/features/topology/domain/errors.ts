@@ -23,9 +23,37 @@ export class TopologyValidationError extends Error {
 }
 
 export class TopologyNotFoundError extends Error {
-  constructor(public readonly scenarioId: string) {
+  constructor(public readonly scopeId: string) {
     super('The requested topology is not available in this scope.');
     this.name = 'TopologyNotFoundError';
+  }
+}
+
+export class TopologyAuthenticationError extends Error {
+  constructor() {
+    super('A current authenticated Atlas session is required to load live topology.');
+    this.name = 'TopologyAuthenticationError';
+  }
+}
+
+export class TopologyAccessError extends Error {
+  constructor() {
+    super('This authenticated role cannot access the requested topology.');
+    this.name = 'TopologyAccessError';
+  }
+}
+
+export class TopologyTransportError extends Error {
+  constructor(message = 'The live topology service could not be reached safely.') {
+    super(message);
+    this.name = 'TopologyTransportError';
+  }
+}
+
+export class TopologyConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TopologyConfigurationError';
   }
 }
 

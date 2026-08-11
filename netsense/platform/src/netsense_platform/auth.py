@@ -12,6 +12,7 @@ from .errors import ApiProblem
 
 
 class Role(StrEnum):
+    PROBE = "probe"
     ENGINEER = "engineer"
     SENIOR = "senior"
     ADMIN = "admin"

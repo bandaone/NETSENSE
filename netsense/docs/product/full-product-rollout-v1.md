@@ -4,14 +4,15 @@
 
 **Branch:** `feat/observe-ui-foundation`
 
-**Reviewed:** 2026-08-10
+**Reviewed:** 2026-08-12
 
 ## Implemented product truth
 
 The repository currently contains a production-built React/TypeScript Atlas
-frontend, portable contracts, product documentation, and an authenticated
-Python platform with PostgreSQL persistence. The Go probe, TimescaleDB metric
-migrations, deployment infrastructure, generated API client, and
+frontend, portable contracts, product documentation, an authenticated Python
+platform with PostgreSQL persistence, ordered topology snapshot ingestion, and
+an opt-in live Atlas HTTP topology adapter. The Go probe, TimescaleDB metric
+migrations, deployment infrastructure, complete generated API client, and
 cross-component test harness described by `docs/developer/repository-guide.md`
 do not yet exist in this repository.
 
@@ -45,20 +46,39 @@ locks so state validation, mutation, audit append, and idempotency recording
 commit atomically. Production composition reads credentials and JWT material
 from mounted files.
 
-The following capabilities are not implemented yet: a live frontend HTTP
-adapter, WebSocket service, event ingestion/processing, TimescaleDB metric
-storage, passive probe, alert delivery, packet forensics and its access audit,
-production deployment, readiness/rate controls, and live Layer 2, Layer 3,
-Flow, Change, and Discovery evidence inputs.
+An authenticated principal with the dedicated `probe` role can submit an exact
+non-synthetic topology snapshot through a sequence- and idempotency-protected
+boundary. The platform binds tenant, site, and evidence collector scope;
+rejects gaps, regressions, conflicting reuse, invalid timestamps, and
+non-probe evidence; and commits the snapshot, cursor, and receipt atomically.
+Operator roles cannot ingest and probe roles cannot read or mutate operational
+resources. Atlas can opt into the live read API, validates the response again
+in the browser, checks expected scope, provides bounded retry, and keeps
+fixture mode explicit by default.
+
+The following capabilities are not implemented yet: a production
+identity-provider login flow, WebSocket service, topology-diff and event
+ingestion/processing, TimescaleDB metric storage, passive probe, alert
+delivery, packet forensics and its access audit, production deployment,
+readiness/rate controls, and live Layer 2, Layer 3, Flow, Change, and Discovery
+evidence inputs.
 
 ## Product boundaries
 
 The current rollout completes Atlas as a trustworthy frontend reference
 implementation and establishes an authenticated, database-isolated platform
-boundary. It does not claim that collection, live frontend integration, alert
+boundary. It does not claim that collection, continuous live updates, alert
 delivery, TimescaleDB metrics, or packet forensics exist. Those capabilities
 require separate ingestion, probe, and deployment workstreams with their own
 threat models, performance harnesses, and reviews.
+
+The customer-facing services and their release gates are governed by the
+[service delivery charter](service-delivery-charter-v1.md). None of the Network Truth Assessment,
+Continuous Atlas Assurance, Managed Network Intelligence, Passive IT/OT
+Visibility, or Incident Evidence and Replay services is generally available
+until its live evidence and operational proof gates pass. Synthetic cases may
+demonstrate product behaviour but may not be represented as customer
+monitoring.
 
 No presentation component may manufacture operational conclusions. Incident
 views consume only validated scenario inputs and deterministic analysis
@@ -145,7 +165,7 @@ are session-only.
 - Complete responsive, keyboard, axe, visual regression, performance, error,
   and reduced-motion verification.
 
-### R6 — Platform and probe — persistence foundation in progress
+### R6 — Platform and probe — snapshot ingestion foundation in progress
 
 - Start only after the contracts and threat model are reviewed.
 - The first Python slice delivers authentication/RBAC, tenant-scoped HTTP
@@ -154,9 +174,11 @@ are session-only.
 - The PostgreSQL slice now delivers reversible relational migrations, forced
   tenant RLS, transactional incident/idempotency storage, append-only workflow
   actions, and file-backed runtime composition.
-- Next deliver event/topology ingestion and the live Atlas HTTP adapter, then
-  readiness, rate controls, and authenticated topology-diff streaming as
-  independently testable slices.
+- The snapshot-ingestion slice now delivers a dedicated probe role, exact live
+  topology submission, per-probe ordering, idempotent receipts, atomic durable
+  storage, and an opt-in live Atlas HTTP topology adapter.
+- Next deliver readiness and rate controls, then authenticated topology-diff
+  ingestion/streaming as independently testable slices.
 - Deliver the Go probe capture/normalisation/buffer path before optional active
   collectors. Hardware and 100 Mbps requirements require target-device tests;
   they cannot be proven in browser CI.
@@ -168,12 +190,19 @@ are session-only.
 - The current main application chunk is approximately 848 kB minified and the
   ELK worker approximately 1.6 MB; route and worker loading need measurement
   and code splitting before scale hardening.
-- Browser-local workflow state is still not connected to the platform and
-  remains non-durable from the user’s perspective. The UI must keep its
-  session-only label until the live adapter replaces the fixture repository.
+- Browser-local incident workflow state is still not connected to the platform
+  and remains non-durable from the user’s perspective. The UI must keep its
+  session-only label until incident adapters use the durable API.
 - PostgreSQL behavior is verified on an isolated PostgreSQL 15 instance, but
   production deployment, backup/restore, failover, connection saturation, and
   target-scale load tests remain unproven.
+- Snapshot ingestion currently accepts complete snapshots and one authoritative
+  collector per site. Safe collector handover/merging, retention/compaction,
+  request-body limits, and rate controls must precede a production rollout.
+- The live Atlas adapter uses a tab-scoped development token bridge. A
+  production identity-provider login, token refresh, and session termination
+  flow remain required; no build-time or persistent browser token storage is
+  permitted.
 
 ## Release gates
 

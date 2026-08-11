@@ -14,10 +14,19 @@ from .db_schema import (
     incident_actions,
     incident_analyses,
     incident_cases,
+    topology_ingestion_receipts,
+    topology_ingestion_state,
     topology_snapshots,
 )
 from .errors import RepositoryConflictError, RepositoryNotFoundError, RepositoryValidationError
-from .repositories import JsonObject
+from .repositories import JsonObject, TopologyIngestionCommand
+from .topology_ingestion import (
+    TopologyCursor,
+    ValidatedTopologyIngestion,
+    classify_topology_ingestion,
+    make_ingestion_receipt,
+    validate_topology_ingestion,
+)
 from .workflow import entity_exists, json_object, operation_fingerprint, require_visible_text
 
 Operation = Literal["acknowledge", "notes", "resolve"]
@@ -65,16 +74,197 @@ class PostgresPlatformRepository:
             topology_snapshots.c.site_id == site_id
         )
         if observed_at is None:
-            statement = statement.order_by(topology_snapshots.c.observed_at.desc()).limit(1)
-        else:
-            statement = statement.where(
-                topology_snapshots.c.observed_at == _parse_timestamp(observed_at)
+            statement = statement.order_by(
+                topology_snapshots.c.observed_at.desc(),
+                topology_snapshots.c.created_at.desc(),
+                topology_snapshots.c.snapshot_id.desc(),
             ).limit(1)
+        else:
+            statement = (
+                statement.where(topology_snapshots.c.observed_at == _parse_timestamp(observed_at))
+                .order_by(
+                    topology_snapshots.c.created_at.desc(),
+                    topology_snapshots.c.snapshot_id.desc(),
+                )
+                .limit(1)
+            )
         async with tenant_transaction(self._engine, tenant_id) as connection:
             payload = (await connection.execute(statement)).scalar_one_or_none()
         if payload is None:
             raise RepositoryNotFoundError
         return self._contracts.validate("topology_snapshot", json_object(payload))
+
+    async def ingest_snapshot(self, command: TopologyIngestionCommand) -> JsonObject:
+        validated = validate_topology_ingestion(command)
+        async with tenant_transaction(self._engine, command.tenant_id) as connection:
+            cursor = await self._locked_topology_cursor(connection, command)
+            replay = await self._topology_replay(connection, command, validated.fingerprint)
+            if replay is not None:
+                return replay
+            classification = classify_topology_ingestion(command, validated, cursor)
+            if classification == "duplicate":
+                return await self._record_topology_receipt(
+                    connection,
+                    command,
+                    validated.fingerprint,
+                    status="duplicate",
+                )
+            await self._persist_topology_snapshot(
+                connection,
+                command,
+                validated,
+                cursor_exists=cursor is not None,
+            )
+            return await self._record_topology_receipt(
+                connection,
+                command,
+                validated.fingerprint,
+                status="accepted",
+            )
+
+    async def _locked_topology_cursor(
+        self,
+        connection: AsyncConnection,
+        command: TopologyIngestionCommand,
+    ) -> TopologyCursor | None:
+        await connection.execute(
+            sa.text("SELECT pg_advisory_xact_lock(hashtext(:tenant_id), hashtext(:scope_id))"),
+            {"tenant_id": command.tenant_id, "scope_id": command.site_id},
+        )
+        row = (
+            (
+                await connection.execute(
+                    sa.select(topology_ingestion_state)
+                    .where(topology_ingestion_state.c.site_id == command.site_id)
+                    .with_for_update()
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            return None
+        if row["collector_id"] != command.collector_id:
+            raise RepositoryConflictError(
+                "TOPOLOGY_COLLECTOR_CONFLICT",
+                "The site already has a different authoritative snapshot collector.",
+            )
+        return TopologyCursor(
+            sequence=row["last_sequence"],
+            snapshot_id=row["last_snapshot_id"],
+            observed_at=row["last_observed_at"],
+            fingerprint=row["last_fingerprint"],
+        )
+
+    async def _persist_topology_snapshot(
+        self,
+        connection: AsyncConnection,
+        command: TopologyIngestionCommand,
+        validated: ValidatedTopologyIngestion,
+        *,
+        cursor_exists: bool,
+    ) -> None:
+        snapshot_exists = (
+            await connection.execute(
+                sa.select(topology_snapshots.c.snapshot_id).where(
+                    topology_snapshots.c.snapshot_id == command.snapshot["snapshotId"]
+                )
+            )
+        ).scalar_one_or_none()
+        if snapshot_exists is not None:
+            raise RepositoryConflictError(
+                "TOPOLOGY_SNAPSHOT_ID_CONFLICT",
+                "The topology snapshot identifier was already used.",
+            )
+        await connection.execute(
+            sa.insert(topology_snapshots).values(
+                tenant_id=command.tenant_id,
+                snapshot_id=command.snapshot["snapshotId"],
+                site_id=command.site_id,
+                observed_at=validated.observed_at,
+                payload=command.snapshot,
+                created_at=validated.accepted_at,
+            )
+        )
+        cursor_values = {
+            "last_sequence": command.sequence,
+            "last_snapshot_id": command.snapshot["snapshotId"],
+            "last_observed_at": validated.observed_at,
+            "last_fingerprint": validated.fingerprint,
+            "updated_at": validated.accepted_at,
+        }
+        if cursor_exists:
+            await connection.execute(
+                sa.update(topology_ingestion_state)
+                .where(
+                    topology_ingestion_state.c.site_id == command.site_id,
+                    topology_ingestion_state.c.collector_id == command.collector_id,
+                )
+                .values(**cursor_values)
+            )
+            return
+        await connection.execute(
+            sa.insert(topology_ingestion_state).values(
+                tenant_id=command.tenant_id,
+                site_id=command.site_id,
+                collector_id=command.collector_id,
+                **cursor_values,
+            )
+        )
+
+    async def _topology_replay(
+        self,
+        connection: AsyncConnection,
+        command: TopologyIngestionCommand,
+        fingerprint: str,
+    ) -> JsonObject | None:
+        row = (
+            (
+                await connection.execute(
+                    sa.select(
+                        topology_ingestion_receipts.c.fingerprint,
+                        topology_ingestion_receipts.c.response,
+                    ).where(
+                        topology_ingestion_receipts.c.collector_id == command.collector_id,
+                        topology_ingestion_receipts.c.idempotency_key == command.idempotency_key,
+                    )
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            return None
+        if row["fingerprint"] != fingerprint:
+            raise RepositoryConflictError(
+                "IDEMPOTENCY_CONFLICT",
+                "The idempotency key was already used for different topology content.",
+            )
+        return self._contracts.validate("topology_ingestion_receipt", json_object(row["response"]))
+
+    async def _record_topology_receipt(
+        self,
+        connection: AsyncConnection,
+        command: TopologyIngestionCommand,
+        fingerprint: str,
+        *,
+        status: Literal["accepted", "duplicate"],
+    ) -> JsonObject:
+        response = self._contracts.validate(
+            "topology_ingestion_receipt",
+            make_ingestion_receipt(command, status=status),
+        )
+        await connection.execute(
+            sa.insert(topology_ingestion_receipts).values(
+                tenant_id=command.tenant_id,
+                collector_id=command.collector_id,
+                idempotency_key=command.idempotency_key,
+                fingerprint=fingerprint,
+                response=response,
+                created_at=_parse_timestamp(command.accepted_at),
+            )
+        )
+        return response
 
     async def list_incidents(
         self,

@@ -7,6 +7,12 @@
 ## Context
 What situation forces this decision? What constraints are we under?
 
+## Service and Invariant Impact
+
+- Service outcome or enabling capability affected
+- Product invariants preserved, strengthened, or intentionally changed
+- Evidence or measurement that will validate the decision
+
 ## Decision
 What did we decide? Be specific.
 
@@ -14,6 +20,7 @@ What did we decide? Be specific.
 - **What becomes easier?**
 - **What becomes harder?**
 - **What risks are we accepting?**
+- **What operational or security burden is introduced?**
 
 ## Alternatives Considered
 - **Alternative A:** What and why rejected
@@ -21,4 +28,3 @@ What did we decide? Be specific.
 
 ## References
 - Links to relevant design documents, RFCs, external documentation
-

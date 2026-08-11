@@ -6,10 +6,11 @@ The checked-in repository contains `dashboard/`, `platform/`, and `docs/`. The
 dashboard is React, TypeScript, Vite, Cytoscape, and ELK with Vitest and
 Playwright verification. The platform is an authenticated, tenant-scoped
 FastAPI kernel with repository ports and a development-only in-memory adapter.
-It now also contains a PostgreSQL adapter, Alembic migration, forced-RLS
-policies, production composition, and real database integration tests. The
-remaining directories are planned and must not be treated as implemented
-release artifacts.
+It now also contains a PostgreSQL adapter, reversible Alembic migrations,
+forced-RLS policies, ordered topology snapshot ingestion, production
+composition, and real database integration tests. Atlas has an opt-in
+authenticated HTTP topology adapter. The remaining directories are planned
+and must not be treated as implemented release artifacts.
 
 ## Target top-level structure
 ```
@@ -40,7 +41,8 @@ netsense/
 - `src/netsense_platform/application.py` — dependency-injected FastAPI routes
 - `src/netsense_platform/auth.py` — RS256 JWT and role enforcement
 - `src/netsense_platform/contracts.py` — generated-schema and graph invariants
-- `src/netsense_platform/repositories.py` — topology and incident ports
+- `src/netsense_platform/repositories.py` — topology read/ingestion and incident ports
+- `src/netsense_platform/topology_ingestion.py` — live snapshot scope, evidence, and time rules
 - `src/netsense_platform/postgres_repository.py` — transactional production adapter
 - `src/netsense_platform/database.py` — engine and transaction-local tenant context
 - `src/netsense_platform/runtime.py` — file-backed production composition
@@ -48,15 +50,16 @@ netsense/
 - `migrations/` — reversible Alembic schema and forced-RLS policies
 - `tests/` — API, authentication, contract, database isolation, transaction, and concurrency tests
 
-The platform does not yet contain background processors, ingestion,
-WebSockets, TimescaleDB metrics, or probe integration.
+The platform does not yet contain background processors, event/metric or
+topology-diff ingestion, WebSockets, TimescaleDB metrics, or physical probe
+integration. Complete topology snapshot ingestion is implemented.
 
 ### dashboard/
-- `src/components/topology/` — Cytoscape.js wrapper
-- `src/components/metrics/` — Recharts charts
-- `src/components/replay/` — forensic replay animation
-- `src/hooks/` — custom React hooks (useTopology, useReplay)
-- `src/api/` — generated API client from OpenAPI spec
+- `src/components/topology/` — topology map and evidence inspectors
+- `src/features/topology/domain/` — validated renderer-independent semantics
+- `src/features/topology/data/` — fixture and authenticated HTTP adapters
+- `src/features/topology/layout/` — stable versioned ELK layout
+- `src/features/incidents/` — deterministic incident reasoning and workflows
 
 ### docs/
 - See `README.md` for full documentation index

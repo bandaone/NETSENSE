@@ -4,7 +4,7 @@ import asyncio
 import os
 from collections.abc import AsyncIterator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -24,10 +24,13 @@ from netsense_platform.db_schema import (
     incident_actions,
     incident_analyses,
     incident_cases,
+    topology_ingestion_receipts,
+    topology_ingestion_state,
     topology_snapshots,
 )
 from netsense_platform.errors import RepositoryConflictError, RepositoryValidationError
 from netsense_platform.postgres_repository import PostgresPlatformRepository
+from netsense_platform.repositories import TopologyIngestionCommand
 
 from .support import (
     INCIDENT_ID,
@@ -90,11 +93,16 @@ async def _configure_application_role(admin_url: str) -> None:
         "ALTER ROLE netsense_app NOSUPERUSER NOBYPASSRLS",
         "GRANT USAGE ON SCHEMA public TO netsense_app",
         (
-            "GRANT SELECT ON topology_snapshots, incident_cases, incident_analyses, "
+            "GRANT SELECT ON topology_snapshots, topology_ingestion_state, "
+            "topology_ingestion_receipts, incident_cases, incident_analyses, "
             "incident_actions, idempotency_records TO netsense_app"
         ),
-        "GRANT INSERT ON incident_actions, idempotency_records TO netsense_app",
-        "GRANT UPDATE ON incident_cases TO netsense_app",
+        (
+            "GRANT INSERT ON topology_snapshots, topology_ingestion_state, "
+            "topology_ingestion_receipts, incident_actions, idempotency_records "
+            "TO netsense_app"
+        ),
+        "GRANT UPDATE ON topology_ingestion_state, incident_cases TO netsense_app",
         "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO netsense_app",
     )
     async with engine.begin() as connection:
@@ -137,7 +145,8 @@ async def _reset_and_seed(admin_engine: AsyncEngine, contracts: ContractRegistry
         await connection.execute(
             sa.text(
                 "TRUNCATE idempotency_records, incident_actions, incident_analyses, "
-                "incident_cases, topology_snapshots RESTART IDENTITY CASCADE"
+                "incident_cases, topology_ingestion_receipts, topology_ingestion_state, "
+                "topology_snapshots RESTART IDENTITY CASCADE"
             )
         )
         for snapshot in (first_snapshot, second_snapshot):
@@ -196,6 +205,125 @@ async def test_reads_are_contract_validated_and_isolated_by_forced_rls(repositor
     assert visible_without_context == 0
 
 
+def _ingestion_command(
+    *,
+    sequence: int,
+    snapshot_id: str,
+    idempotency_key: str,
+    collector_id: str = "collector:test",
+) -> TopologyIngestionCommand:
+    return TopologyIngestionCommand(
+        tenant_id=TENANT_ID,
+        site_id=SITE_ID,
+        collector_id=collector_id,
+        sequence=sequence,
+        idempotency_key=idempotency_key,
+        accepted_at=datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        snapshot=topology_snapshot(snapshot_id=snapshot_id, collector_id=collector_id),
+    )
+
+
+@pytest.mark.asyncio
+async def test_topology_ingestion_is_ordered_idempotent_atomic_and_current(repositories) -> None:
+    repository, app_engine, _, _ = repositories
+    first_command = _ingestion_command(
+        sequence=40,
+        snapshot_id="snapshot:postgres:040",
+        idempotency_key="postgres-topology-key-040",
+    )
+    first, replay = await asyncio.gather(
+        repository.ingest_snapshot(first_command),
+        repository.ingest_snapshot(first_command),
+    )
+    duplicate = await repository.ingest_snapshot(
+        _ingestion_command(
+            sequence=40,
+            snapshot_id="snapshot:postgres:040",
+            idempotency_key="postgres-topology-duplicate-040",
+        )
+    )
+    second = await repository.ingest_snapshot(
+        _ingestion_command(
+            sequence=41,
+            snapshot_id="snapshot:postgres:041",
+            idempotency_key="postgres-topology-key-041",
+        )
+    )
+
+    assert first == replay
+    assert first["status"] == second["status"] == "accepted"
+    assert duplicate["status"] == "duplicate"
+    assert (await repository.get_snapshot(TENANT_ID, SITE_ID, None))["snapshotId"] == (
+        "snapshot:postgres:041"
+    )
+    async with tenant_transaction(app_engine, TENANT_ID) as connection:
+        snapshot_count = (
+            await connection.execute(sa.select(sa.func.count()).select_from(topology_snapshots))
+        ).scalar_one()
+        receipt_count = (
+            await connection.execute(
+                sa.select(sa.func.count()).select_from(topology_ingestion_receipts)
+            )
+        ).scalar_one()
+        cursor = (
+            await connection.execute(
+                sa.select(
+                    topology_ingestion_state.c.last_sequence,
+                    topology_ingestion_state.c.last_snapshot_id,
+                )
+            )
+        ).one()
+    assert snapshot_count == 3
+    assert receipt_count == 3
+    assert tuple(cursor) == (41, "snapshot:postgres:041")
+
+
+@pytest.mark.asyncio
+async def test_topology_gap_rolls_back_without_snapshot_or_receipt(repositories) -> None:
+    repository, app_engine, _, _ = repositories
+    await repository.ingest_snapshot(
+        _ingestion_command(
+            sequence=7,
+            snapshot_id="snapshot:postgres:007",
+            idempotency_key="postgres-topology-key-007",
+        )
+    )
+    with pytest.raises(RepositoryConflictError) as captured:
+        await repository.ingest_snapshot(
+            _ingestion_command(
+                sequence=9,
+                snapshot_id="snapshot:postgres:009",
+                idempotency_key="postgres-topology-key-009",
+            )
+        )
+    assert captured.value.code == "TOPOLOGY_SEQUENCE_GAP"
+    with pytest.raises(RepositoryConflictError) as collector_conflict:
+        await repository.ingest_snapshot(
+            _ingestion_command(
+                sequence=1,
+                snapshot_id="snapshot:postgres:other-collector",
+                idempotency_key="postgres-topology-other-collector",
+                collector_id="collector:other",
+            )
+        )
+    assert collector_conflict.value.code == "TOPOLOGY_COLLECTOR_CONFLICT"
+    async with tenant_transaction(app_engine, TENANT_ID) as connection:
+        rejected_snapshot = (
+            await connection.execute(
+                sa.select(topology_snapshots.c.snapshot_id).where(
+                    topology_snapshots.c.snapshot_id == "snapshot:postgres:009"
+                )
+            )
+        ).scalar_one_or_none()
+        receipt_count = (
+            await connection.execute(
+                sa.select(sa.func.count()).select_from(topology_ingestion_receipts)
+            )
+        ).scalar_one()
+    assert rejected_snapshot is None
+    assert receipt_count == 1
+
+
 @pytest.mark.asyncio
 async def test_authenticated_api_composes_with_durable_repository(repositories) -> None:
     repository, _, _, contracts = repositories
@@ -204,6 +332,7 @@ async def test_authenticated_api_composes_with_durable_repository(repositories) 
         authenticator=authenticator(keys),
         contracts=contracts,
         topology_repository=repository,
+        topology_ingestion_repository=repository,
         incident_repository=repository,
         trace_id_factory=lambda: "trace_postgres_integration_001",
     )
@@ -417,6 +546,8 @@ async def test_every_tenant_table_has_one_forced_rls_policy(repositories) -> Non
     _, _, admin_engine, _ = repositories
     expected = {
         "topology_snapshots",
+        "topology_ingestion_state",
+        "topology_ingestion_receipts",
         "incident_cases",
         "incident_analyses",
         "incident_actions",

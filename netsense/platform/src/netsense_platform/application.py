@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import uuid4
 
-from fastapi import Body, Depends, FastAPI, Header, Path, Query, Request
+from fastapi import Body, Depends, FastAPI, Header, Path, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.types import Lifespan
@@ -22,9 +22,17 @@ from .errors import (
     Violation,
     not_found,
 )
-from .repositories import IncidentRepository, JsonObject, TopologyRepository
+from .repositories import (
+    IncidentRepository,
+    JsonObject,
+    TopologyIngestionCommand,
+    TopologyIngestionRepository,
+    TopologyRepository,
+)
 
 LOGGER = logging.getLogger("netsense.platform")
+READ_ROLES = frozenset({Role.ENGINEER, Role.SENIOR, Role.ADMIN})
+INGESTION_ROLES = frozenset({Role.PROBE})
 MUTATION_ROLES = frozenset({Role.ENGINEER, Role.SENIOR, Role.ADMIN})
 RESOLUTION_ROLES = frozenset({Role.SENIOR, Role.ADMIN})
 
@@ -34,6 +42,7 @@ def create_app(
     authenticator: JwtAuthenticator,
     contracts: ContractRegistry,
     topology_repository: TopologyRepository,
+    topology_ingestion_repository: TopologyIngestionRepository,
     incident_repository: IncidentRepository,
     now: Callable[[], datetime] | None = None,
     trace_id_factory: Callable[[], str] | None = None,
@@ -157,10 +166,43 @@ def create_app(
         principal: Principal = Depends(current_principal),
         observed_at: Annotated[str | None, Query(alias="observedAt")] = None,
     ) -> JsonObject:
+        require_role(principal, READ_ROLES)
         snapshot = await topology_repository.get_snapshot(principal.tenant_id, site_id, observed_at)
         snapshot = contracts.validate("topology_snapshot", snapshot)
         _require_topology_scope(snapshot, principal, site_id)
         return snapshot
+
+    @app.post("/api/v1/sites/{site_id}/topology/snapshots", status_code=201)
+    async def ingest_topology_snapshot(
+        response: Response,
+        site_id: Annotated[str, Path(min_length=1, max_length=160)],
+        body: dict[str, Any] = Body(),
+        sequence: int = Header(
+            alias="X-Topology-Sequence",
+            ge=1,
+            le=9_007_199_254_740_991,
+        ),
+        idempotency_key: str = Header(alias="Idempotency-Key", min_length=16, max_length=200),
+        principal: Principal = Depends(current_principal),
+    ) -> JsonObject:
+        require_role(principal, INGESTION_ROLES)
+        snapshot = _validate_request(contracts, "topology_snapshot", body)
+        receipt = await topology_ingestion_repository.ingest_snapshot(
+            TopologyIngestionCommand(
+                tenant_id=principal.tenant_id,
+                site_id=site_id,
+                collector_id=principal.subject,
+                sequence=sequence,
+                idempotency_key=idempotency_key,
+                accepted_at=_occurred_at(clock),
+                snapshot=snapshot,
+            )
+        )
+        receipt = contracts.validate("topology_ingestion_receipt", receipt)
+        _require_ingestion_scope(receipt, snapshot, principal, site_id, sequence)
+        if receipt["status"] == "duplicate":
+            response.status_code = 200
+        return receipt
 
     @app.get("/api/v1/sites/{site_id}/incidents")
     async def list_incidents(
@@ -169,6 +211,7 @@ def create_app(
         state: Annotated[Literal["open", "acknowledged", "resolved"] | None, Query()] = None,
         cursor: Annotated[str | None, Query(max_length=500)] = None,
     ) -> JsonObject:
+        require_role(principal, READ_ROLES)
         if cursor is not None:
             raise ApiProblem(
                 status=422,
@@ -190,6 +233,7 @@ def create_app(
         incident_id: Annotated[str, Path(min_length=1, max_length=160)],
         principal: Principal = Depends(current_principal),
     ) -> JsonObject:
+        require_role(principal, READ_ROLES)
         incident_case = await incident_repository.get_incident_case(
             principal.tenant_id, incident_id
         )
@@ -202,6 +246,7 @@ def create_app(
         incident_id: Annotated[str, Path(min_length=1, max_length=160)],
         principal: Principal = Depends(current_principal),
     ) -> JsonObject:
+        require_role(principal, READ_ROLES)
         incident_case = await incident_repository.get_incident_case(
             principal.tenant_id, incident_id
         )
@@ -318,6 +363,26 @@ def _require_topology_scope(snapshot: JsonObject, principal: Principal, site_id:
         raise ContractViolationError(
             "topology_snapshot",
             (Violation(path="/", message="Topology response scope is inconsistent."),),
+        )
+
+
+def _require_ingestion_scope(
+    receipt: JsonObject,
+    snapshot: JsonObject,
+    principal: Principal,
+    site_id: str,
+    sequence: int,
+) -> None:
+    if (
+        receipt["tenantId"] != principal.tenant_id
+        or receipt["collectorId"] != principal.subject
+        or receipt["siteId"] != site_id
+        or receipt["snapshotId"] != snapshot["snapshotId"]
+        or receipt["sequence"] != sequence
+    ):
+        raise ContractViolationError(
+            "topology_ingestion_receipt",
+            (Violation(path="/", message="Topology ingestion response scope is inconsistent."),),
         )
 
 

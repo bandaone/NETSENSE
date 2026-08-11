@@ -10,6 +10,7 @@ not claim complete visibility when monitoring coverage or evidence is partial.
 | You are... | Start here |
 |------------|------------|
 | New to the project, want to understand what we're building | [architecture.md](architecture.md) |
+| Deciding what belongs in the product or a customer service | [product/service-delivery-charter-v1.md](product/service-delivery-charter-v1.md) |
 | About to write code, need to set up your environment | [developer/getting-started.md](developer/getting-started.md) |
 | Reviewing what is implemented versus planned | [product/full-product-rollout-v1.md](product/full-product-rollout-v1.md) |
 | Designing a feature, need the specification template | [rfcs/RFC-template.md](rfcs/RFC-template.md) |
@@ -24,13 +25,14 @@ not claim complete visibility when monitoring coverage or evidence is partial.
 ## Project Status
 
 **Current phase:** Atlas frontend plus authenticated, PostgreSQL-backed platform
-foundation; live ingestion, frontend wiring, and the probe remain planned.
+with ordered topology snapshot ingestion and opt-in live Atlas reads; the
+physical probe, diff streaming, metrics, and production identity flow remain
+planned.
 
 **Current version:** 0.0.0 (pre-release)
 
-**Next milestone:** Add a bounded ingestion boundary and connect Atlas through
-the authenticated HTTP adapter, then add readiness/rate controls and topology
-diff streaming before the passive probe workstream.
+**Next milestone:** Add readiness/rate controls and authenticated topology-diff
+ingestion/streaming before the passive probe workstream.
 
 ## Documentation Structure
 
@@ -39,6 +41,8 @@ diff streaming before the passive probe workstream.
 - `engineering-methodology.md` — How we build (ADRs, RFCs, CI/CD, testing)
 - `literature-review.md` — Academic and competitive landscape
 - `product/` — Requirements, UX research, test plans
+- `product/service-delivery-charter-v1.md` — Governing customer outcomes,
+  service gates, and work acceptance rules
 - `adr/` — Architecture Decision Records
 - `rfcs/` — Engineering specifications for each subsystem
 - `contracts/` — API and data contracts (OpenAPI, JSON Schema)
