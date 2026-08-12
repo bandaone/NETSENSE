@@ -1,8 +1,9 @@
 # NetSense platform API kernel
 
 Status: authenticated service boundary, ordered topology snapshot ingestion,
-and PostgreSQL persistence implemented and tested; no physical probe or
-topology streaming yet.
+bounded admission, dependency-aware readiness, and PostgreSQL persistence
+implemented and tested. The separate Go passive-probe foundation emits this
+contract; live target integration and topology streaming remain open.
 
 This package turns the Atlas contracts into an authenticated FastAPI boundary
 with a transaction-backed PostgreSQL adapter. TimescaleDB is deliberately not
@@ -32,13 +33,22 @@ harness.
   tenant context.
 - JSONB identity and scope constraints independent of application validation.
 - Per-probe sequence cursors and ingestion receipts protected by forced RLS.
+- A configurable 32 MiB default request-body guard that rejects declared and
+  streamed oversize requests before JSON decoding.
+- Concurrency-safe per-process probe/site ingestion rate control with bounded
+  key memory and explicit `Retry-After` responses.
+- Dependency-aware readiness that verifies database reachability, required
+  relations, forced RLS policies, runtime table privileges, and sequence
+  privileges within a bounded timeout.
 - File-backed production composition for database credentials and JWT public
   key material.
 
 The unauthenticated `/health/live` route intentionally reports only process
-liveness and exposes no dependency, tenant, build, or configuration details.
-All `/api/v1` routes require authentication. Interactive API documentation is
-disabled in this kernel.
+liveness. `/health/ready` returns `ready` only when the current database
+boundary is reachable and correctly secured for the runtime identity. A
+failure returns only `unavailable`; neither route exposes dependency, tenant,
+build, or configuration details. All `/api/v1` routes require authentication.
+Interactive API documentation is disabled in this kernel.
 
 ## Local verification
 
@@ -95,8 +105,17 @@ export NETSENSE_JWT_PUBLIC_KEY_FILE=/run/secrets/netsense_jwt_public_key
 export NETSENSE_JWT_ISSUER=https://identity.example
 export NETSENSE_JWT_AUDIENCE=netsense-platform
 export NETSENSE_CONTRACTS_DIRECTORY=/app/docs/contracts
+export NETSENSE_MAX_REQUEST_BODY_BYTES=33554432
+export NETSENSE_TOPOLOGY_RATE_LIMIT=12
+export NETSENSE_TOPOLOGY_RATE_WINDOW_SECONDS=60
+export NETSENSE_READINESS_TIMEOUT_SECONDS=2
 uvicorn netsense_platform.runtime:create_runtime_app_from_environment --factory
 ```
+
+The application limiter is deliberately process-local. Production ingress
+must enforce a cluster-wide authenticated request rate and a body limit no
+larger than the application setting. Probe retry logic must retain the same
+sequence and idempotency key when honoring `Retry-After`.
 
 ## Deliberate boundaries
 
@@ -106,9 +125,10 @@ uvicorn netsense_platform.runtime:create_runtime_app_from_environment --factory
   `PostgresPlatformRepository`.
 - Database migrations intentionally do not create login roles or embed
   credentials. Deployment automation must create and grant the runtime role.
-- WebSocket topology streaming, cursor pagination, rate limiting, readiness
-  checks, event and metric ingestion, TimescaleDB metric storage, and the
-  physical probe remain follow-on slices. Snapshot ingestion is implemented;
+- WebSocket topology streaming, cursor pagination, distributed edge admission,
+  event and metric ingestion, TimescaleDB metric storage, and production probe
+  enrolment remain follow-on slices. Snapshot ingestion, the separate passive
+  probe foundation, and process-local admission/readiness are implemented;
   topology-diff ingestion is not.
 - Append-only storage currently covers incident workflow actions, not the
   future PCAP access audit required by NFR-SEC-005.

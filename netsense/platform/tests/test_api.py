@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -8,8 +9,14 @@ from typing import Any
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from netsense_platform.admission import (
+    AllowAllRateLimiter,
+    InMemoryFixedWindowRateLimiter,
+    RateLimiter,
+)
 from netsense_platform.application import create_app
 from netsense_platform.memory_repository import MemoryPlatformRepository
+from netsense_platform.readiness import ReadinessProbe, StaticReadinessProbe
 
 from .support import (
     INCIDENT_ID,
@@ -33,7 +40,14 @@ def keys() -> SigningKeys:
     return signing_keys()
 
 
-def make_app(keys: SigningKeys, repo: MemoryPlatformRepository | None = None):
+def make_app(
+    keys: SigningKeys,
+    repo: MemoryPlatformRepository | None = None,
+    *,
+    rate_limiter: RateLimiter | None = None,
+    readiness_probe: ReadinessProbe | None = None,
+    max_request_body_bytes: int = 32 * 1024 * 1024,
+):
     contracts = contract_registry()
     configured_repository = repo or repository(contracts)
     return create_app(
@@ -42,6 +56,9 @@ def make_app(keys: SigningKeys, repo: MemoryPlatformRepository | None = None):
         topology_repository=configured_repository,
         topology_ingestion_repository=configured_repository,
         incident_repository=configured_repository,
+        ingestion_rate_limiter=rate_limiter or AllowAllRateLimiter(),
+        readiness_probe=readiness_probe or StaticReadinessProbe(),
+        max_request_body_bytes=max_request_body_bytes,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_platform_test_001",
     )
@@ -49,9 +66,14 @@ def make_app(keys: SigningKeys, repo: MemoryPlatformRepository | None = None):
 
 @asynccontextmanager
 async def client_for(
-    keys: SigningKeys, repo: MemoryPlatformRepository | None = None
+    keys: SigningKeys,
+    repo: MemoryPlatformRepository | None = None,
+    **app_options: Any,
 ) -> AsyncIterator[AsyncClient]:
-    transport = ASGITransport(app=make_app(keys, repo), raise_app_exceptions=False)
+    transport = ASGITransport(
+        app=make_app(keys, repo, **app_options),
+        raise_app_exceptions=False,
+    )
     async with AsyncClient(transport=transport, base_url="https://platform.test") as client:
         yield client
 
@@ -88,6 +110,135 @@ async def test_liveness_is_minimal_and_api_requires_authentication(keys: Signing
     assert unauthorized.headers["content-type"].startswith("application/problem+json")
     assert unauthorized.headers["www-authenticate"] == "Bearer"
     assert unauthorized.json()["traceId"] == "trace_platform_test_001"
+
+
+@pytest.mark.asyncio
+async def test_readiness_is_dependency_aware_and_non_disclosing(keys: SigningKeys) -> None:
+    async with client_for(keys, readiness_probe=StaticReadinessProbe()) as client:
+        ready = await client.get("/health/ready")
+    async with client_for(keys, readiness_probe=StaticReadinessProbe(False)) as client:
+        unavailable = await client.get("/health/ready")
+        live = await client.get("/health/live")
+
+    assert ready.status_code == 200
+    assert ready.json() == {"status": "ready"}
+    assert unavailable.status_code == 503
+    assert unavailable.json() == {"status": "unavailable"}
+    assert "database" not in unavailable.text.lower()
+    assert live.status_code == 200
+    assert live.json() == {"status": "healthy"}
+
+
+@pytest.mark.asyncio
+async def test_ingestion_body_limit_accepts_boundary_and_rejects_oversize(
+    keys: SigningKeys,
+) -> None:
+    snapshot = topology_snapshot(snapshot_id="snapshot:body-limit:001")
+    payload = json.dumps(snapshot, separators=(",", ":")).encode()
+    headers = {
+        **probe_headers(
+            keys,
+            idempotency_key="topology-body-limit-key-001",
+            sequence=1,
+        ),
+        "Content-Type": "application/json",
+    }
+    accepted_repository = repository(contract_registry())
+    async with client_for(
+        keys,
+        accepted_repository,
+        max_request_body_bytes=len(payload),
+    ) as client:
+        accepted = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            content=payload,
+        )
+
+    rejected_repository = repository(contract_registry())
+    async with client_for(
+        keys,
+        rejected_repository,
+        max_request_body_bytes=len(payload) - 1,
+    ) as client:
+        rejected = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            content=payload,
+        )
+        current = await client.get(
+            f"/api/v1/sites/{SITE_ID}/topology",
+            headers=auth_headers(keys),
+        )
+
+    assert accepted.status_code == 201
+    assert rejected.status_code == 413
+    assert rejected.json()["code"] == "PAYLOAD_TOO_LARGE"
+    assert rejected.headers["x-trace-id"] == "trace_platform_test_001"
+    assert rejected.headers["cache-control"] == "no-store"
+    assert current.json()["snapshotId"] != snapshot["snapshotId"]
+
+
+@pytest.mark.asyncio
+async def test_ingestion_body_limit_counts_streamed_chunks(keys: SigningKeys) -> None:
+    snapshot = topology_snapshot(snapshot_id="snapshot:chunk-limit:001")
+    payload = json.dumps(snapshot, separators=(",", ":")).encode()
+
+    async def chunks():
+        midpoint = len(payload) // 2
+        yield payload[:midpoint]
+        yield payload[midpoint:]
+
+    headers = {
+        **probe_headers(
+            keys,
+            idempotency_key="topology-chunk-limit-key-01",
+            sequence=1,
+        ),
+        "Content-Type": "application/json",
+    }
+    async with client_for(keys, max_request_body_bytes=len(payload) - 1) as client:
+        response = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            content=chunks(),
+        )
+
+    assert response.status_code == 413
+    assert response.json()["code"] == "PAYLOAD_TOO_LARGE"
+
+
+@pytest.mark.asyncio
+async def test_ingestion_rate_limit_is_scoped_and_returns_retry_after(keys: SigningKeys) -> None:
+    now = [100.0]
+    limiter = InMemoryFixedWindowRateLimiter(
+        limit=1,
+        window_seconds=60,
+        clock=lambda: now[0],
+    )
+    snapshot = topology_snapshot(snapshot_id="snapshot:rate-limit:001")
+    headers = probe_headers(
+        keys,
+        idempotency_key="topology-rate-limit-key-001",
+        sequence=1,
+    )
+    async with client_for(keys, rate_limiter=limiter) as client:
+        accepted = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            json=snapshot,
+        )
+        rejected = await client.post(
+            f"/api/v1/sites/{SITE_ID}/topology/snapshots",
+            headers=headers,
+            json=snapshot,
+        )
+
+    assert accepted.status_code == 201
+    assert rejected.status_code == 429
+    assert rejected.headers["retry-after"] == "60"
+    assert rejected.json()["code"] == "RATE_LIMITED"
+    assert snapshot["snapshotId"] not in rejected.text
 
 
 @pytest.mark.asyncio
@@ -467,6 +618,9 @@ async def test_repository_scope_leak_is_blocked_as_an_internal_contract_failure(
         topology_repository=_CrossScopeTopologyRepository(),
         topology_ingestion_repository=incident_repo,
         incident_repository=incident_repo,
+        ingestion_rate_limiter=AllowAllRateLimiter(),
+        readiness_probe=StaticReadinessProbe(),
+        max_request_body_bytes=32 * 1024 * 1024,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_scope_failure_001",
     )
@@ -497,6 +651,9 @@ async def test_analysis_scope_leak_is_blocked_as_an_internal_contract_failure(
         topology_repository=configured_repository,
         topology_ingestion_repository=configured_repository,
         incident_repository=_CrossScopeAnalysisRepository(configured_repository),
+        ingestion_rate_limiter=AllowAllRateLimiter(),
+        readiness_probe=StaticReadinessProbe(),
+        max_request_body_bytes=32 * 1024 * 1024,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_analysis_scope_failure_001",
     )
@@ -522,6 +679,9 @@ async def test_unexpected_repository_failure_is_non_disclosing(keys: SigningKeys
         topology_repository=_FailingTopologyRepository(),
         topology_ingestion_repository=incident_repo,
         incident_repository=incident_repo,
+        ingestion_rate_limiter=AllowAllRateLimiter(),
+        readiness_probe=StaticReadinessProbe(),
+        max_request_body_bytes=32 * 1024 * 1024,
         now=lambda: NOW,
         trace_id_factory=lambda: "trace_repository_failure_001",
     )

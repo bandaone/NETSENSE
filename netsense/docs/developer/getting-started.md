@@ -15,8 +15,10 @@ npm ci
 npm run dev
 ```
 
-This starts the implemented Atlas dashboard. TimescaleDB, Redis, WireGuard,
-and the Go probe are target-architecture components and are not present yet.
+This starts the implemented Atlas dashboard. TimescaleDB, Redis, and WireGuard
+remain target-architecture components. The Go probe foundation is present but
+requires a Linux target with libpcap headers, an authorised mirror interface,
+and an enrolled platform token; see `../../probe/README.md`.
 The Python platform is separately runnable with its PostgreSQL adapter after
 migration and restricted-role setup; see `../../platform/README.md`.
 
@@ -50,10 +52,19 @@ NETSENSE_TEST_APP_DATABASE_URL='postgresql+asyncpg://netsense_app:netsense_app_t
 docker compose -f compose.test.yaml down
 ```
 
-The dashboard and platform tests load deterministic, validated synthetic
-fixtures. PostgreSQL integration fixtures are test-only; there is no
-production seed command or physical probe yet. The ordered live topology
-snapshot path must receive only authorised, non-synthetic probe evidence.
+Verify the probe independently:
+
+```bash
+cd probe
+go test -race ./...
+go vet ./...
+go build -tags libpcap ./cmd/netsense-probe
+```
+
+The dashboard and most platform tests load deterministic, validated synthetic
+fixtures. PostgreSQL integration fixtures are test-only. A shared non-synthetic
+probe snapshot fixture proves Go/Python contract compatibility, but live mirror
+traffic is accepted only on an authorised target network.
 
 ### Project Structure
 See `repository-guide.md`.

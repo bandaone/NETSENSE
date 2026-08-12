@@ -253,18 +253,22 @@ As of 2026-08-12, Atlas supplies a strong synthetic reference implementation,
 portable contracts, deterministic incident reasoning, tested topology
 interaction, and an opt-in authenticated live topology adapter. The platform
 supplies authenticated tenant-scoped HTTP boundaries, ordered/idempotent
-topology snapshot ingestion, and PostgreSQL persistence with forced RLS. The
-physical probe, topology-diff streaming, live evidence collectors, metrics,
-alert delivery, production identity flow, and forensic capture are not yet
-implemented. Consequently, none of S1 through S5 is currently generally
-available as a live customer service.
+topology snapshot ingestion, bounded local admission, dependency-aware
+readiness, and PostgreSQL persistence with forced RLS. The first Go probe slice
+implements passive IP-header observation, conservative flow maps, durable
+full-snapshot buffering, and authenticated delivery. Target-network proof,
+richer identity and physical/L2 discovery, distributed ingress admission,
+topology-diff streaming, metrics, alert delivery, production identity flow,
+and forensic capture remain open. Consequently, none of S1 through S5 is
+currently generally available as a live customer service.
 
 The immediate engineering path is:
 
-1. readiness and rate controls for the snapshot boundary;
-2. authenticated topology-diff ingestion and streaming;
-3. passive probe capture, normalisation, identity, and durable buffering;
-4. live discovery and evidence-backed topology on pilot hardware;
-5. metrics, change detection, alert delivery, and incident evidence;
-6. production identity, deployment, support, security, and commercial pilot
+1. validate passive capture, identity stability, recovery, and evidence-backed
+   topology on authorised pilot hardware;
+2. add only measured, evidence-safe identity and Layer 2 enrichments;
+3. authenticated topology-diff ingestion, streaming, and bounded recovery;
+4. metrics, change detection, alert delivery, and incident evidence;
+5. production identity, distributed ingress admission, deployment, support,
+   security, and commercial pilot
    gates.

@@ -10,11 +10,10 @@
 
 The repository currently contains a production-built React/TypeScript Atlas
 frontend, portable contracts, product documentation, an authenticated Python
-platform with PostgreSQL persistence, ordered topology snapshot ingestion, and
-an opt-in live Atlas HTTP topology adapter. The Go probe, TimescaleDB metric
-migrations, deployment infrastructure, complete generated API client, and
-cross-component test harness described by `docs/developer/repository-guide.md`
-do not yet exist in this repository.
+platform with PostgreSQL persistence, ordered topology snapshot ingestion, an
+opt-in live Atlas HTTP topology adapter, and a bounded Go passive-probe
+foundation. TimescaleDB metric migrations, deployment infrastructure, complete
+generated API client, and a deployed cross-component harness do not yet exist.
 
 Atlas currently provides validated synthetic cross-industry topology and
 incident cases; independent health, freshness, coverage, and management
@@ -56,12 +55,29 @@ resources. Atlas can opt into the live read API, validates the response again
 in the browser, checks expected scope, provides bounded retry, and keeps
 fixture mode explicit by default.
 
+The platform bounds request bodies before JSON decoding, applies a
+concurrency-safe per-process admission rate to each authenticated
+tenant/site/collector scope, returns explicit retry guidance, and exposes
+dependency-aware readiness. Readiness verifies database access, required
+relations, forced RLS/policies, and the runtime privileges required by this
+slice without disclosing dependency details. Cluster-wide ingress limiting
+remains a deployment responsibility.
+
+The Go probe now supplies strict configuration; gopacket/libpcap header
+decoding; MAC-backed identity and unambiguous observed-flow correlation;
+honest unknown/partial evidence; crash-safe ordered snapshot spooling; token
+rotation through a restricted file; and bounded authenticated delivery with
+retry/reconciliation behavior. Its golden snapshot is validated by both Go and
+the platform contract registry. It does not yet prove capture performance,
+live discovery accuracy, physical adjacency, device health, or deployment
+fitness on target hardware.
+
 The following capabilities are not implemented yet: a production
 identity-provider login flow, WebSocket service, topology-diff and event
-ingestion/processing, TimescaleDB metric storage, passive probe, alert
-delivery, packet forensics and its access audit, production deployment,
-readiness/rate controls, and live Layer 2, Layer 3, Flow, Change, and Discovery
-evidence inputs.
+ingestion/processing, TimescaleDB metric storage, enriched Layer 2/Layer 3 and
+protocol discovery, alert delivery, packet forensics and its access audit,
+production probe enrolment/supervision, production deployment, distributed
+ingress controls, and live target-network acceptance.
 
 ## Product boundaries
 
@@ -165,7 +181,7 @@ are session-only.
 - Complete responsive, keyboard, axe, visual regression, performance, error,
   and reduced-motion verification.
 
-### R6 — Platform and probe — snapshot ingestion foundation in progress
+### R6 — Platform and probe — hardened snapshot ingestion foundation complete
 
 - Start only after the contracts and threat model are reviewed.
 - The first Python slice delivers authentication/RBAC, tenant-scoped HTTP
@@ -177,16 +193,20 @@ are session-only.
 - The snapshot-ingestion slice now delivers a dedicated probe role, exact live
   topology submission, per-probe ordering, idempotent receipts, atomic durable
   storage, and an opt-in live Atlas HTTP topology adapter.
-- Next deliver readiness and rate controls, then authenticated topology-diff
-  ingestion/streaming as independently testable slices.
-- Deliver the Go probe capture/normalisation/buffer path before optional active
-  collectors. Hardware and 100 Mbps requirements require target-device tests;
-  they cannot be proven in browser CI.
+- The admission slice now delivers bounded bodies, process-local probe/site
+  rate control, retry guidance, and database/schema/security-aware readiness.
+- The Go probe slice now delivers passive header capture/normalisation,
+  conservative identity/flow snapshots, crash-safe buffering, and ordered
+  authenticated delivery. Hardware and 100 Mbps requirements remain
+  target-device gates; repository CI cannot prove them.
+- Add authenticated topology-diff ingestion/streaming after the probe can
+  produce stable full snapshots and recovery behavior has real measurements.
 
 ## Current engineering risks
 
-- Python now validates the same generated portable schemas as TypeScript. Go
-  conformance and shared cross-language fixture execution remain unproven.
+- Go snapshot output is locked to a golden fixture validated by the Python
+  schema and graph invariants. This guards contract drift but does not replace a
+  deployed Probe → Platform → PostgreSQL → Atlas integration test.
 - The current main application chunk is approximately 848 kB minified and the
   ELK worker approximately 1.6 MB; route and worker loading need measurement
   and code splitting before scale hardening.
@@ -198,7 +218,13 @@ are session-only.
   target-scale load tests remain unproven.
 - Snapshot ingestion currently accepts complete snapshots and one authoritative
   collector per site. Safe collector handover/merging, retention/compaction,
-  request-body limits, and rate controls must precede a production rollout.
+  distributed ingress admission, and measured payload/throughput budgets must
+  precede a production rollout. The current 32 MiB and 12/minute application
+  defaults are safety bounds, not validated capacity claims.
+- The probe currently recognises only source-MAC identities and independently
+  resolved IP flows from unicast IP headers. It cannot claim physical topology,
+  VLAN inventory, hostname/vendor/role discovery, health, silent devices, or
+  full-network coverage; target capture loss and spool capacity are unmeasured.
 - The live Atlas adapter uses a tab-scoped development token bridge. A
   production identity-provider login, token refresh, and session termination
   flow remain required; no build-time or persistent browser token storage is

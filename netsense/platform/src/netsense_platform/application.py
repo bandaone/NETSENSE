@@ -11,6 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.types import Lifespan
 
+from .admission import RateLimiter, RateLimitKey
 from .auth import JwtAuthenticator, Principal, Role, require_role
 from .contracts import ContractRegistry
 from .errors import (
@@ -22,6 +23,7 @@ from .errors import (
     Violation,
     not_found,
 )
+from .readiness import ReadinessProbe
 from .repositories import (
     IncidentRepository,
     JsonObject,
@@ -29,6 +31,7 @@ from .repositories import (
     TopologyIngestionRepository,
     TopologyRepository,
 )
+from .request_limits import RequestBodyLimitMiddleware
 
 LOGGER = logging.getLogger("netsense.platform")
 READ_ROLES = frozenset({Role.ENGINEER, Role.SENIOR, Role.ADMIN})
@@ -44,6 +47,9 @@ def create_app(
     topology_repository: TopologyRepository,
     topology_ingestion_repository: TopologyIngestionRepository,
     incident_repository: IncidentRepository,
+    ingestion_rate_limiter: RateLimiter,
+    readiness_probe: ReadinessProbe,
+    max_request_body_bytes: int,
     now: Callable[[], datetime] | None = None,
     trace_id_factory: Callable[[], str] | None = None,
     lifespan: Lifespan[FastAPI] | None = None,
@@ -58,6 +64,7 @@ def create_app(
         openapi_url=None,
         lifespan=lifespan,
     )
+    app.add_middleware(RequestBodyLimitMiddleware, max_bytes=max_request_body_bytes)
 
     @app.middleware("http")
     async def attach_trace_id(request: Request, call_next: Callable[..., Any]):
@@ -71,12 +78,14 @@ def create_app(
     @app.exception_handler(ApiProblem)
     async def handle_api_problem(request: Request, error: ApiProblem) -> JSONResponse:
         document = contracts.validate("problem", error.as_document(_trace_id(request)))
-        headers = {"WWW-Authenticate": "Bearer"} if error.status == 401 else None
+        headers = dict(error.headers)
+        if error.status == 401:
+            headers["WWW-Authenticate"] = "Bearer"
         return JSONResponse(
             status_code=error.status,
             content=document,
             media_type="application/problem+json",
-            headers=headers,
+            headers=headers or None,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -156,9 +165,39 @@ def create_app(
     ) -> Principal:
         return authenticator.authenticate(authorization)
 
+    async def admitted_probe(
+        site_id: Annotated[str, Path(min_length=1, max_length=160)],
+        principal: Principal = Depends(current_principal),
+    ) -> Principal:
+        require_role(principal, INGESTION_ROLES)
+        decision = await ingestion_rate_limiter.acquire(
+            RateLimitKey(
+                tenant_id=principal.tenant_id,
+                site_id=site_id,
+                collector_id=principal.subject,
+            )
+        )
+        if not decision.allowed:
+            retry_after = decision.retry_after_seconds or 1
+            raise ApiProblem(
+                status=429,
+                code="RATE_LIMITED",
+                title="Request rate exceeded",
+                detail="Retry the request after the indicated delay.",
+                headers={"Retry-After": str(retry_after)},
+            )
+        return principal
+
     @app.get("/health/live", include_in_schema=False)
     async def liveness() -> dict[str, str]:
         return {"status": "healthy"}
+
+    @app.get("/health/ready", include_in_schema=False)
+    async def readiness(response: Response) -> dict[str, str]:
+        if await readiness_probe.is_ready():
+            return {"status": "ready"}
+        response.status_code = 503
+        return {"status": "unavailable"}
 
     @app.get("/api/v1/sites/{site_id}/topology")
     async def get_topology_snapshot(
@@ -183,9 +222,8 @@ def create_app(
             le=9_007_199_254_740_991,
         ),
         idempotency_key: str = Header(alias="Idempotency-Key", min_length=16, max_length=200),
-        principal: Principal = Depends(current_principal),
+        principal: Principal = Depends(admitted_probe),
     ) -> JsonObject:
-        require_role(principal, INGESTION_ROLES)
         snapshot = _validate_request(contracts, "topology_snapshot", body)
         receipt = await topology_ingestion_repository.ingest_snapshot(
             TopologyIngestionCommand(

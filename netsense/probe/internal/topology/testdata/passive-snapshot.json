@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshotId": "snapshot:6dfdaa5a52b61cf9:00000000000000000007",
+  "tenantId": "tenant:test",
+  "organisation": {
+    "id": "organisation:test",
+    "name": "Test Organisation"
+  },
+  "site": {
+    "id": "site:test",
+    "organisationId": "organisation:test",
+    "name": "Test Site"
+  },
+  "generatedAt": "2026-08-12T08:01:00Z",
+  "observedAt": "2026-08-12T08:00:01Z",
+  "coverageSummary": {
+    "totalEntities": 2,
+    "full": 0,
+    "partial": 2,
+    "none": 0,
+    "unsupported": 0
+  },
+  "nodes": [
+    {
+      "id": "device:passive:72cc1f33b49db253fb8b725b",
+      "kind": "device",
+      "displayName": "Observed device 000001",
+      "role": "unclassified network endpoint",
+      "identifiers": {
+        "hostnames": [],
+        "ipAddresses": ["10.0.0.1"],
+        "macAddresses": ["02:00:00:00:00:01"],
+        "serialNumbers": []
+      },
+      "parentId": null,
+      "operationalCriticality": 3,
+      "lifecycleState": "discovered",
+      "assessment": {
+        "operationalHealth": "unknown",
+        "freshness": "current",
+        "coverage": "partial",
+        "managementState": "passive_only",
+        "confidence": 0.7,
+        "assessedAt": "2026-08-12T08:01:00Z",
+        "reasonCodes": ["PASSIVE_HEADER_OBSERVATION", "HEALTH_NOT_MEASURED"],
+        "evidenceIds": ["evidence:passive-device:72cc1f33b49db253fb8b725b"]
+      },
+      "tags": ["passive", "unclassified"],
+      "evidenceIds": ["evidence:passive-device:72cc1f33b49db253fb8b725b"]
+    },
+    {
+      "id": "device:passive:2b3f342d58da2f7e3970a48e",
+      "kind": "device",
+      "displayName": "Observed device 000002",
+      "role": "unclassified network endpoint",
+      "identifiers": {
+        "hostnames": [],
+        "ipAddresses": ["10.0.0.2"],
+        "macAddresses": ["02:00:00:00:00:02"],
+        "serialNumbers": []
+      },
+      "parentId": null,
+      "operationalCriticality": 3,
+      "lifecycleState": "discovered",
+      "assessment": {
+        "operationalHealth": "unknown",
+        "freshness": "current",
+        "coverage": "partial",
+        "managementState": "passive_only",
+        "confidence": 0.7,
+        "assessedAt": "2026-08-12T08:01:00Z",
+        "reasonCodes": ["PASSIVE_HEADER_OBSERVATION", "HEALTH_NOT_MEASURED"],
+        "evidenceIds": ["evidence:passive-device:2b3f342d58da2f7e3970a48e"]
+      },
+      "tags": ["passive", "unclassified"],
+      "evidenceIds": ["evidence:passive-device:2b3f342d58da2f7e3970a48e"]
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "interface:passive:72cc1f33b49db253fb8b725b",
+      "deviceId": "device:passive:72cc1f33b49db253fb8b725b",
+      "name": "passively observed interface",
+      "macAddresses": ["02:00:00:00:00:01"],
+      "addresses": ["10.0.0.1"],
+      "media": "unknown",
+      "speedBps": null,
+      "adminState": "unknown",
+      "operationalState": "unknown",
+      "vlan": {"mode": "unknown", "memberships": []},
+      "evidenceIds": ["evidence:passive-device:72cc1f33b49db253fb8b725b"]
+    },
+    {
+      "id": "interface:passive:2b3f342d58da2f7e3970a48e",
+      "deviceId": "device:passive:2b3f342d58da2f7e3970a48e",
+      "name": "passively observed interface",
+      "macAddresses": ["02:00:00:00:00:02"],
+      "addresses": ["10.0.0.2"],
+      "media": "unknown",
+      "speedBps": null,
+      "adminState": "unknown",
+      "operationalState": "unknown",
+      "vlan": {"mode": "unknown", "memberships": []},
+      "evidenceIds": ["evidence:passive-device:2b3f342d58da2f7e3970a48e"]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relationship:observed-flow:967163efdc16fe2febc2855b",
+      "source": {"nodeId": "device:passive:72cc1f33b49db253fb8b725b"},
+      "target": {"nodeId": "device:passive:2b3f342d58da2f7e3970a48e"},
+      "relationshipType": "observed_flow",
+      "directionality": "directed",
+      "status": "unknown",
+      "confidence": 0.65,
+      "firstObservedAt": "2026-08-12T08:00:00Z",
+      "lastObservedAt": "2026-08-12T08:00:00Z",
+      "evidenceIds": ["evidence:observed-flow:967163efdc16fe2febc2855b"],
+      "expiresAt": "2026-08-12T08:15:00Z",
+      "knowledgeKind": "observed"
+    },
+    {
+      "id": "relationship:observed-flow:d19627391e020483f1811844",
+      "source": {"nodeId": "device:passive:2b3f342d58da2f7e3970a48e"},
+      "target": {"nodeId": "device:passive:72cc1f33b49db253fb8b725b"},
+      "relationshipType": "observed_flow",
+      "directionality": "directed",
+      "status": "unknown",
+      "confidence": 0.65,
+      "firstObservedAt": "2026-08-12T08:00:01Z",
+      "lastObservedAt": "2026-08-12T08:00:01Z",
+      "evidenceIds": ["evidence:observed-flow:d19627391e020483f1811844"],
+      "expiresAt": "2026-08-12T08:15:01Z",
+      "knowledgeKind": "observed"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence:observed-flow:967163efdc16fe2febc2855b",
+      "sourceType": "flow",
+      "collectorId": "collector:test",
+      "observedAt": "2026-08-12T08:00:00Z",
+      "expiresAt": "2026-08-12T08:15:00Z",
+      "summary": "Observed tcp packet headers between independently observed endpoint identities.",
+      "confidenceContribution": 0.65,
+      "limitations": [
+        "Observed communication does not establish physical adjacency or service dependency.",
+        "Only endpoints independently observed as packet sources are related."
+      ]
+    },
+    {
+      "id": "evidence:observed-flow:d19627391e020483f1811844",
+      "sourceType": "flow",
+      "collectorId": "collector:test",
+      "observedAt": "2026-08-12T08:00:01Z",
+      "expiresAt": "2026-08-12T08:15:01Z",
+      "summary": "Observed tcp packet headers between independently observed endpoint identities.",
+      "confidenceContribution": 0.65,
+      "limitations": [
+        "Observed communication does not establish physical adjacency or service dependency.",
+        "Only endpoints independently observed as packet sources are related."
+      ]
+    },
+    {
+      "id": "evidence:passive-device:2b3f342d58da2f7e3970a48e",
+      "sourceType": "flow",
+      "collectorId": "collector:test",
+      "observedAt": "2026-08-12T08:00:01Z",
+      "expiresAt": "2026-08-12T08:15:01Z",
+      "summary": "Observed source Ethernet and IP headers on the configured mirror interface.",
+      "confidenceContribution": 0.7,
+      "limitations": [
+        "Passive headers do not establish device health, ownership, model, or operational role.",
+        "IP addresses enrich an observed MAC identity and are not treated as stable identity alone."
+      ]
+    },
+    {
+      "id": "evidence:passive-device:72cc1f33b49db253fb8b725b",
+      "sourceType": "flow",
+      "collectorId": "collector:test",
+      "observedAt": "2026-08-12T08:00:00Z",
+      "expiresAt": "2026-08-12T08:15:00Z",
+      "summary": "Observed source Ethernet and IP headers on the configured mirror interface.",
+      "confidenceContribution": 0.7,
+      "limitations": [
+        "Passive headers do not establish device health, ownership, model, or operational role.",
+        "IP addresses enrich an observed MAC identity and are not treated as stable identity alone."
+      ]
+    }
+  ],
+  "synthetic": false,
+  "syntheticDataNotice": null
+}

@@ -6,9 +6,10 @@ info:
     Tenant-scoped API for Atlas topology and incident workflows. The schemas
     are generated from the validated TypeScript domain models and consumed by
     the authenticated Python platform. PostgreSQL persistence, database RLS,
-    and ordered topology snapshot ingestion are implemented; rate limiting and
-    WebSocket streaming are not.
-x-netsense-status: topology-snapshot-ingestion-implemented-streaming-planned
+    ordered topology snapshot ingestion, bounded request bodies, probe/site
+    ingestion admission, and dependency-aware readiness are implemented;
+    WebSocket streaming is not.
+x-netsense-status: topology-ingestion-admission-readiness-implemented-streaming-planned
 servers:
   - url: https://{host}/api/v1
     variables:
@@ -38,7 +39,6 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /sites/{siteId}/topology/snapshots:
     post:
@@ -68,6 +68,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
         '429': { $ref: '#/components/responses/RateLimited' }
 
@@ -91,7 +92,6 @@ paths:
         '101': { description: Switching Protocols }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /sites/{siteId}/incidents:
     get:
@@ -116,7 +116,6 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /incidents/{incidentId}:
     get:
@@ -133,7 +132,6 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /incidents/{incidentId}/analysis:
     get:
@@ -150,7 +148,6 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /incidents/{incidentId}/acknowledgements:
     post:
@@ -175,8 +172,8 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /incidents/{incidentId}/notes:
     put:
@@ -201,8 +198,8 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
   /incidents/{incidentId}/resolution:
     post:
@@ -227,8 +224,8 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '422': { $ref: '#/components/responses/InvalidRequest' }
-        '429': { $ref: '#/components/responses/RateLimited' }
 
 components:
   securitySchemes:
@@ -285,8 +282,13 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+    PayloadTooLarge:
+      description: Request body exceeded the configured application admission limit
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
     RateLimited:
-      description: Authenticated principal or tenant exceeded a bounded request rate
+      description: Authenticated probe/site scope exceeded its local ingestion rate
       headers:
         Retry-After:
           schema: { type: integer, minimum: 1 }

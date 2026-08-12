@@ -1,8 +1,9 @@
 # NetSense contract boundary
 
-Status: consumed by the authenticated PostgreSQL-backed platform and Atlas
-HTTP adapter; ordered topology snapshot ingestion is implemented, while no
-topology stream, generated full API client, or physical probe is implemented
+Status: consumed by Atlas, the authenticated PostgreSQL-backed platform, and
+the Go passive-probe snapshot builder. Ordered full-snapshot ingestion and
+bounded admission are implemented; topology streaming and a generated full API
+client are not.
 
 The JSON Schemas in this directory are generated from the same strict Zod
 schemas used at the dashboard repository boundaries. They are the portable
@@ -45,7 +46,15 @@ portable contracts.
   before they reach application state.
 - Incident mutations require an idempotency key and an expected-state
   precondition.
+- Mutating request bodies are bounded before contract decoding. Topology
+  ingestion may return `413` for body admission and `429` with `Retry-After`
+  for an exhausted authenticated probe/site scope.
 
 Cross-object graph, evidence-reference, coverage-total, and incident-scope
 invariants are enforced after structural parsing because JSON Schema cannot
 express all of them safely.
+
+`probe/internal/topology/testdata/passive-snapshot.json` is a shared golden
+fixture. Go tests prove the builder still produces it; platform tests prove it
+satisfies this schema and the Python graph invariants. This is contract
+conformance, not proof of live discovery accuracy.

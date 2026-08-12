@@ -24,15 +24,19 @@ not claim complete visibility when monitoring coverage or evidence is partial.
 
 ## Project Status
 
-**Current phase:** Atlas frontend plus authenticated, PostgreSQL-backed platform
-with ordered topology snapshot ingestion and opt-in live Atlas reads; the
-physical probe, diff streaming, metrics, and production identity flow remain
-planned.
+**Current phase:** Atlas frontend, authenticated PostgreSQL-backed platform, and
+a Go passive-probe foundation now form a tested full-snapshot path. The probe
+decodes mirrored packet headers, builds deliberately limited flow topology,
+spools ordered snapshots durably, and uploads them to the platform. Target
+hardware/network acceptance, diff streaming, metrics, and production identity
+remain open gates.
 
 **Current version:** 0.0.0 (pre-release)
 
-**Next milestone:** Add readiness/rate controls and authenticated topology-diff
-ingestion/streaming before the passive probe workstream.
+**Next milestone:** Exercise Probe → Platform → PostgreSQL → Atlas on an
+authorised representative network and measure discovery accuracy, packet loss,
+identity stability, recovery, and operator usefulness. Distributed ingress
+admission and topology-diff recovery remain independent production gates.
 
 ## Documentation Structure
 

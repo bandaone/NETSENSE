@@ -51,9 +51,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RFC-009 and cross-layer tests defining the first full-snapshot ingestion
   boundary; topology diffs, collector handover, and payload/rate controls remain
   separate release gates.
+- RFC-010 platform admission with a pre-decoding request-body ceiling,
+  concurrency-safe per-process probe/site rate control, bounded limiter state,
+  `Retry-After` guidance, and fail-closed runtime configuration.
+- Dependency-aware readiness that verifies database reachability, required
+  relations, forced RLS policies, and exact runtime table/sequence privileges
+  while returning only a non-disclosing ready/unavailable state.
+- RFC-011 Go passive-probe foundation with strict configuration, build-tagged
+  libpcap capture, payload-free header observations, conservative MAC identity
+  and observed-flow mapping, crash-safe ordered spooling, token-file rotation,
+  and bounded authenticated snapshot delivery.
+- Shared Go/Python passive-snapshot fixture proving the emitted full snapshot
+  satisfies the portable schema and cross-object graph invariants.
 - Expanded Python dependency audit with no known vulnerabilities reported on
   2026-08-10.
-- Verified product rollout boundary separating implemented frontend from planned platform/probe work.
+- Verified product rollout boundary separating implemented foundations from
+  target-network acceptance and planned production capabilities.
 - Complete documentation tree (architecture, requirements, UX, testing, ADRs, RFCs)
 - Functional requirements (75 FRs) and non-functional requirements (20 NFRs)
 - Requirements traceability matrix

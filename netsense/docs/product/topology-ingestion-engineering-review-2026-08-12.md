@@ -6,17 +6,16 @@ loading, generated contracts, migrations, and cross-layer tests.
 
 ## Outcome
 
-Conditionally accepted as the first live topology transport slice. The code
+Accepted as the first live topology transport slice. The code
 provides an explicit and test-backed route from an authenticated collector to a
 tenant-isolated current snapshot, and from the read API to Atlas. It does not
 yet discover a network, stream topology changes, or constitute a deployable
 continuous-monitoring service.
 
-The database-backed regression and migration rerun after the final readability
-refactor is pending because the execution environment did not grant access to
-start the isolated PostgreSQL container. The earlier pre-refactor integration
-run passed; this review does not silently treat that earlier result as proof of
-the final refactor.
+The previously blocked database gate was cleared on 2026-08-12: the final
+ingestion refactor passed all 53 platform tests against isolated PostgreSQL 15
+at 90.49% branch-aware coverage, and migration `20260811_0002` cleanly
+downgraded to `20260810_0001` and re-upgraded to head.
 
 ## Golden-rule review
 
@@ -95,8 +94,9 @@ mutate operator resources. Tenant scope comes from the verified token, while
 site and collector bindings are checked before persistence. Both new tables
 enable and force tenant RLS. The development live adapter reads a token only
 from tab-scoped session storage and sends no cookies; this is not a substitute
-for a production identity-provider session. Body-size and rate limits remain a
-deployment blocker.
+for a production identity-provider session. Application body/rate admission is
+covered by the subsequent RFC-010 slice; distributed ingress admission remains
+a deployment gate.
 
 ### 11. Test coverage
 
@@ -104,9 +104,8 @@ The final refactor passes Ruff plus 21 targeted API and ingestion tests. The
 frontend previously passed 76 unit tests and 16 Playwright browser workflows,
 including accessibility checks. PostgreSQL tests cover atomic persistence,
 concurrent replay, gap rollback, current-snapshot reads, collector conflict,
-RLS policy presence, and grants. The complete database-backed rerun remains
-pending for the reason recorded in the outcome and must pass before this slice
-is merged or represented as release-ready.
+RLS policy presence, and grants. The complete database-backed run passed 53/53
+with 90.49% coverage before RFC-010 work began.
 
 ### 12. Architectural consistency
 
@@ -141,21 +140,21 @@ contradictory graphs.
 | Browser and accessibility workflows | Pass; 16/16 |
 | Platform Ruff lint | Pass |
 | Targeted platform API and ingestion tests | Pass; 21/21 |
-| Full platform regression after final refactor | Pending database execution access |
-| PostgreSQL integration after final refactor | Pending database execution access |
-| Migration downgrade/re-upgrade after final refactor | Pending database execution access |
+| Full platform regression after final refactor | Pass; 53/53, 90.49% coverage |
+| PostgreSQL integration after final refactor | Pass on isolated PostgreSQL 15 |
+| Migration downgrade/re-upgrade after final refactor | Pass; `0002 -> 0001 -> head` |
 | Python vulnerability audit for this slice | Not run; no claim made |
 
 ## Required next work
 
-1. Clear the pending PostgreSQL regression and migration gates.
-2. Add bounded request-body and per-collector/site rate controls with tests.
-3. Add platform readiness that distinguishes process health from database and
-   migration readiness.
-4. Define authenticated topology-diff ingestion and recovery without weakening
+1. Add bounded request-body and per-collector/site rate controls with tests.
+2. Add platform readiness that distinguishes process health from database and
+   migration/security readiness.
+3. Define authenticated topology-diff ingestion and recovery without weakening
    the full-snapshot authority model.
-5. Build the passive probe capture, normalisation, stable-identity, and durable
+4. Build the passive probe capture, normalisation, stable-identity, and durable
    offline-buffer path on representative hardware.
 
-Until steps one through five and the S1 gates pass, Atlas live mode is an
+RFC-010 completes items one and two. Until the remaining steps and the S1 gates
+pass, Atlas live mode is an
 integration capability, not a claim of automatic network discovery.

@@ -26,6 +26,7 @@ class ApiProblem(Exception):
         title: str,
         detail: str | None = None,
         violations: tuple[Violation, ...] = (),
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(title)
         self.status = status
@@ -33,6 +34,7 @@ class ApiProblem(Exception):
         self.title = title
         self.detail = detail
         self.violations = violations
+        self.headers = headers or {}
 
     def as_document(self, trace_id: str) -> dict[str, Any]:
         document: dict[str, Any] = {

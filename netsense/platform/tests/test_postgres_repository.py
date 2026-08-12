@@ -16,6 +16,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from netsense_platform.admission import AllowAllRateLimiter
 from netsense_platform.application import create_app
 from netsense_platform.contracts import ContractRegistry
 from netsense_platform.database import create_database_engine, tenant_transaction
@@ -30,6 +31,7 @@ from netsense_platform.db_schema import (
 )
 from netsense_platform.errors import RepositoryConflictError, RepositoryValidationError
 from netsense_platform.postgres_repository import PostgresPlatformRepository
+from netsense_platform.readiness import PostgresReadinessProbe, StaticReadinessProbe
 from netsense_platform.repositories import TopologyIngestionCommand
 
 from .support import (
@@ -334,6 +336,9 @@ async def test_authenticated_api_composes_with_durable_repository(repositories) 
         topology_repository=repository,
         topology_ingestion_repository=repository,
         incident_repository=repository,
+        ingestion_rate_limiter=AllowAllRateLimiter(),
+        readiness_probe=StaticReadinessProbe(),
+        max_request_body_bytes=32 * 1024 * 1024,
         trace_id_factory=lambda: "trace_postgres_integration_001",
     )
     transport = ASGITransport(app=app, raise_app_exceptions=False)
@@ -352,6 +357,14 @@ async def test_authenticated_api_composes_with_durable_repository(repositories) 
     assert acknowledgement.json()["state"] == "acknowledged"
     persisted = await repository.get_incident_case(TENANT_ID, INCIDENT_ID)
     assert persisted["incident"]["state"] == "acknowledged"
+
+
+@pytest.mark.asyncio
+async def test_postgres_readiness_requires_current_platform_relations(repositories) -> None:
+    _, app_engine, _, _ = repositories
+    probe = PostgresReadinessProbe(engine=app_engine, timeout_seconds=2)
+
+    assert await probe.is_ready()
 
 
 @pytest.mark.asyncio
