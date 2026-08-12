@@ -68,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Investigate default, calibrated sparse-network viewport and labels, and an
   engineering record of routed identity, multi-homing, refresh, and
   capture-scope limits.
+- Independent RFC-012 software-LAN acceptance lab with real kernel TCP/UDP/ICMP
+  traffic, production Probe-to-Platform ingestion, live Atlas rendering,
+  hidden traffic truth, a silent negative control, strict black-box semantic
+  scoring, digest-pinned actors, ownership-safe cleanup, and adversarial tests.
 - Loopback-only Vite development proxy authentication from an owner-only token
   file, allowing live Atlas inspection across isolated local browser surfaces
   without placing credentials in URLs, client configuration, or browser

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "labId": "software-lan-v1",
+  "actorImage": "python@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634",
+  "network": {
+    "name": "netsense-acceptance-lan",
+    "bridgeName": "nslab-br0",
+    "subnet": "10.88.10.0/24",
+    "gateway": "10.88.10.1"
+  },
+  "site": {
+    "tenantId": "tenant:virtual-acceptance",
+    "organisationId": "organisation:virtual-acceptance",
+    "organisationName": "NetSense Virtual Acceptance",
+    "siteId": "site:software-lan-v1",
+    "siteName": "Software LAN Acceptance Lab",
+    "collectorId": "collector:software-lan-v1:01"
+  },
+  "nodes": [
+    {
+      "name": "nslab-client-a",
+      "role": "client",
+      "address": "10.88.10.11",
+      "macAddress": "02:42:0a:58:0a:0b",
+      "mode": "hold"
+    },
+    {
+      "name": "nslab-client-b",
+      "role": "client",
+      "address": "10.88.10.12",
+      "macAddress": "02:42:0a:58:0a:0c",
+      "mode": "hold"
+    },
+    {
+      "name": "nslab-service",
+      "role": "service",
+      "address": "10.88.10.20",
+      "macAddress": "02:42:0a:58:0a:14",
+      "mode": "server"
+    },
+    {
+      "name": "nslab-silent",
+      "role": "silent-negative-control",
+      "address": "10.88.10.30",
+      "macAddress": "02:42:0a:58:0a:1e",
+      "mode": "hold",
+      "silent": true
+    }
+  ],
+  "traffic": [
+    {
+      "id": "client-a-to-service-tcp",
+      "actor": "nslab-client-a",
+      "kind": "tcp",
+      "sourceAddress": "10.88.10.11",
+      "targetAddress": "10.88.10.20",
+      "targetPort": 8080,
+      "exchanges": 4
+    },
+    {
+      "id": "client-b-to-service-udp",
+      "actor": "nslab-client-b",
+      "kind": "udp",
+      "sourceAddress": "10.88.10.12",
+      "targetAddress": "10.88.10.20",
+      "targetPort": 5353,
+      "exchanges": 4
+    },
+    {
+      "id": "client-a-to-gateway-icmp",
+      "actor": "nslab-client-a",
+      "kind": "icmp",
+      "sourceAddress": "10.88.10.11",
+      "targetAddress": "10.88.10.1",
+      "exchanges": 4
+    }
+  ]
+}
