@@ -22,7 +22,7 @@ describe('projectSnapshotToCytoscape', () => {
     );
   });
 
-  it('applies stored positions and renders a non-colour health marker', () => {
+  it('applies stored positions and retains semantic health and coverage data', () => {
     const elements = projectSnapshotToCytoscape(
       healthyMukubaSnapshotFixture,
       healthyMukubaOperationsLayout,
@@ -32,7 +32,9 @@ describe('projectSnapshotToCytoscape', () => {
     expect(core?.position).toEqual(
       healthyMukubaOperationsLayout.positions['device:mukuba-copper-complex:core-01'],
     );
-    expect(core?.data.label).toContain('✓');
+    expect(core?.data.operationalHealth).toBe('healthy');
+    expect(core?.data.coverage).toBe('full');
+    expect(core?.data.label).not.toContain('✓');
   });
 
   it('resolves interface endpoints to their owning devices', () => {
@@ -76,7 +78,7 @@ describe('projectSnapshotToCytoscape', () => {
     expect(plc?.data.shape).toBe('round-rectangle');
     expect(plc?.data.labelMedium).toContain('Crusher PLC 01');
     expect(plc?.data.labelHigh).toContain('10.77.40.101');
-    expect(plc?.data.labelMedium).toContain('◐');
+    expect(plc?.data.coverage).toBe('partial');
     expect(plc?.data.width).toBeGreaterThan(plc?.data.height);
   });
 });

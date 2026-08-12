@@ -18,20 +18,6 @@ const STATUS_MARKER: Record<TopologyNode['assessment']['operationalHealth'], str
   unknown: '?',
 };
 
-const COVERAGE_MARKER: Record<TopologyNode['assessment']['coverage'], string> = {
-  full: '',
-  partial: '◐',
-  none: '○',
-  unsupported: '⊘',
-};
-
-const FRESHNESS_MARKER: Record<TopologyNode['assessment']['freshness'], string> = {
-  current: '',
-  stale: '◷',
-  expired: '⌛',
-  never_observed: '?',
-};
-
 export interface AtlasCytoscapeNodeData {
   id: string;
   label: string;
@@ -118,14 +104,6 @@ function nodeGlyph(node: TopologyNode): string {
   }
 }
 
-function statusPrefix(node: TopologyNode): string {
-  return [
-    STATUS_MARKER[node.assessment.operationalHealth],
-    COVERAGE_MARKER[node.assessment.coverage],
-    FRESHNESS_MARKER[node.assessment.freshness],
-  ].filter(Boolean).join(' ');
-}
-
 export function projectSnapshotToCytoscape(
   snapshot: TopologySnapshot,
   layout: LayoutProfile | undefined,
@@ -142,13 +120,12 @@ export function projectSnapshotToCytoscape(
     endpoint.nodeId ?? (endpoint.interfaceId ? interfaceToDevice.get(endpoint.interfaceId) : undefined);
 
   const nodeElements: ElementDefinition[] = snapshot.nodes.map(node => {
-    const prefix = statusPrefix(node);
     const primaryAddress = node.identifiers.ipAddresses[0] ?? 'Address not observed';
     const roleLabel = node.role.replace(/_/g, ' ');
     const isGroup = node.kind === 'site' || node.kind === 'location' || node.kind === 'zone';
     const glyph = nodeGlyph(node);
     const dimensions = atlasNodeDimensions(node);
-    const mediumLabel = isGroup ? node.displayName : `${prefix}  ${glyph} ${node.displayName}`;
+    const mediumLabel = node.displayName;
     const highLabel = isGroup
       ? node.displayName
       : `${mediumLabel}\n${roleLabel} · ${primaryAddress}`;

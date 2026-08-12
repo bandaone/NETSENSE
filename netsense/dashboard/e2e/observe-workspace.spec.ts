@@ -134,6 +134,8 @@ test('Investigate searches technical and operational identity and explains relat
   await page.getByRole('link', { name: 'Investigate' }).click();
   await expect(page).toHaveURL(/\/investigate$/);
   await expect(page.getByRole('heading', { name: 'Investigate the evidence' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Operations', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('region', { name: /Operational topology map/ })).toBeVisible();
 
   const search = page.getByRole('searchbox', { name: 'Search topology' });
   await search.fill('192.0.2.11');

@@ -63,6 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and bounded authenticated snapshot delivery.
 - Shared Go/Python passive-snapshot fixture proving the emitted full snapshot
   satisfies the portable schema and cross-object graph invariants.
+- First authorised MiFi live-path exercise, including native browser transport
+  correction, Operations-lens observed-flow projection, an evidence-first
+  Investigate default, calibrated sparse-network viewport and labels, and an
+  engineering record of routed identity, multi-homing, refresh, and
+  capture-scope limits.
 - Expanded Python dependency audit with no known vulnerabilities reported on
   2026-08-10.
 - Verified product rollout boundary separating implemented foundations from

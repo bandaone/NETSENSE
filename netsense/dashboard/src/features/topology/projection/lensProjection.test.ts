@@ -29,6 +29,19 @@ describe('projectSnapshotForLens', () => {
     expect(dependency.coverageSummary.totalEntities).toBe(dependency.nodes.length);
   });
 
+  it('shows observed communication only as operational evidence', () => {
+    const snapshot = structuredClone(healthyAsterEnterpriseSnapshotFixture);
+    snapshot.relationships = [{
+      ...snapshot.relationships[0],
+      relationshipType: 'observed_flow',
+      knowledgeKind: 'observed',
+    }];
+
+    expect(projectSnapshotForLens(snapshot, 'operations').relationships).toHaveLength(1);
+    expect(projectSnapshotForLens(snapshot, 'physical').relationships).toHaveLength(0);
+    expect(projectSnapshotForLens(snapshot, 'dependency').relationships).toHaveLength(0);
+  });
+
   it('uses the same projection engine for enterprise and industrial fixtures', () => {
     for (const snapshot of [healthyAsterEnterpriseSnapshotFixture, healthyMukubaSnapshotFixture]) {
       const operations = projectSnapshotForLens(snapshot, 'operations');

@@ -11,6 +11,7 @@ import {
   createAtlasStyles,
   readAtlasRendererPalette,
 } from '../../features/topology/rendering/atlasStyles';
+import { automaticAtlasZoomLimit } from '../../features/topology/rendering/viewportPolicy';
 import { cn } from '../../lib/utils';
 
 export interface TopologyMapProps {
@@ -31,7 +32,7 @@ interface NodeTooltip {
 
 function updateSemanticPresentation(cy: Core): void {
   const zoom = cy.zoom();
-  const field = zoom < 0.66 ? 'labelLow' : zoom < 1.18 ? 'labelMedium' : 'labelHigh';
+  const field = zoom < 0.66 ? 'labelLow' : zoom < 1.5 ? 'labelMedium' : 'labelHigh';
   cy.batch(() => {
     cy.nodes().forEach(node => {
       const data: unknown = node.data();
@@ -39,9 +40,21 @@ function updateSemanticPresentation(cy: Core): void {
       node.data('label', data[field]);
     });
     cy.edges().forEach(edge => {
-      edge.data('label', zoom >= 1.34 ? edge.data('labelHigh') : '');
+      edge.data('label', zoom >= 1.3 ? edge.data('labelHigh') : '');
     });
   });
+}
+
+function fitAtlasView(cy: Core): void {
+  cy.resize();
+  cy.fit(cy.elements(), 54);
+  const entityCount = cy.nodes('.atlas-entity').length;
+  const zoomLimit = automaticAtlasZoomLimit(entityCount);
+  if (zoomLimit !== undefined && cy.zoom() > zoomLimit) {
+    cy.zoom(zoomLimit);
+    cy.center(cy.elements());
+  }
+  updateSemanticPresentation(cy);
 }
 
 export function TopologyMap({
@@ -75,7 +88,7 @@ export function TopologyMap({
       container: containerRef.current,
       elements: initialElementsRef.current,
       style: createAtlasStyles(readAtlasRendererPalette(document.documentElement)),
-      layout: { name: 'preset', fit: true, padding: 54 },
+      layout: { name: 'preset', fit: false },
       wheelSensitivity: 0.12,
       minZoom: 0.25,
       maxZoom: 3,
@@ -84,7 +97,7 @@ export function TopologyMap({
     });
     cyRef.current = cy;
     fittedRef.current = cy.nodes().length > 0;
-    updateSemanticPresentation(cy);
+    fitAtlasView(cy);
 
     cy.on('tap', 'node.atlas-entity', event => {
       const data: unknown = event.target.data();
@@ -116,9 +129,7 @@ export function TopologyMap({
     const resizeObserver = new ResizeObserver(() => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
-        cy.resize();
-        cy.fit(cy.elements(), 54);
-        updateSemanticPresentation(cy);
+        fitAtlasView(cy);
       });
     });
     resizeObserver.observe(containerRef.current);
@@ -168,9 +179,7 @@ export function TopologyMap({
     if (!fittedRef.current && cy.nodes().length > 0) {
       fittedRef.current = true;
       requestAnimationFrame(() => {
-        cy.resize();
-        cy.fit(cy.elements(), 54);
-        updateSemanticPresentation(cy);
+        fitAtlasView(cy);
       });
     } else {
       updateSemanticPresentation(cy);
@@ -200,9 +209,7 @@ export function TopologyMap({
   const fitView = useCallback(() => {
     const cy = cyRef.current;
     if (!cy) return;
-    cy.resize();
-    cy.fit(cy.elements(), 54);
-    updateSemanticPresentation(cy);
+    fitAtlasView(cy);
   }, []);
 
   const zoomBy = useCallback((factor: number) => {

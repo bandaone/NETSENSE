@@ -213,7 +213,7 @@ function SearchRail({
 
 export function InvestigateWorkspace({ snapshot }: { snapshot: TopologySnapshot }) {
   const [filters, setFilters] = useState<TopologyFilters>(DEFAULT_FILTERS);
-  const [lens, setLens] = useState<ActiveAtlasLens>('dependency');
+  const [lens, setLens] = useState<ActiveAtlasLens>('operations');
   const [selectedNodeId, setSelectedNodeId] = useState<string>();
   const [selectedRelationshipId, setSelectedRelationshipId] = useState<string>();
   const selectionTriggerRef = useRef<HTMLButtonElement>();

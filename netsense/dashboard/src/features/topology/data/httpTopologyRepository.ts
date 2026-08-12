@@ -15,6 +15,8 @@ export type TopologyFetch = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+const browserFetch: TopologyFetch = (input, init) => globalThis.fetch(input, init);
+
 function normalizedBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, '');
 }
@@ -25,7 +27,7 @@ export class HttpTopologyRepository implements TopologyRepository {
   constructor(
     baseUrl: string,
     private readonly accessToken: AccessTokenProvider,
-    private readonly fetchTopology: TopologyFetch = fetch,
+    private readonly fetchTopology: TopologyFetch = browserFetch,
   ) {
     this.baseUrl = normalizedBaseUrl(baseUrl);
   }

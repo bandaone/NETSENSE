@@ -18,7 +18,7 @@ export const ATLAS_LENSES: AtlasLensDefinition[] = [
     id: 'operations',
     label: 'Operations',
     shortLabel: 'Operations',
-    purpose: 'Organisational structure, important infrastructure and operational capabilities.',
+    purpose: 'Operational structure, observed communication and supported capabilities.',
   },
   {
     id: 'physical',
@@ -72,6 +72,7 @@ const PHYSICAL_RELATIONSHIPS = new Set<TopologyRelationship['relationshipType']>
 
 const OPERATIONS_RELATIONSHIPS = new Set<TopologyRelationship['relationshipType']>([
   'physical_adjacency',
+  'observed_flow',
   'hosts',
   'depends_on',
   'controls',

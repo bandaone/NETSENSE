@@ -29,6 +29,29 @@ function liveSnapshot(): unknown {
 }
 
 describe('HttpTopologyRepository', () => {
+  it('uses browser fetch through the global receiver by default', async () => {
+    const originalFetch = globalThis.fetch;
+    const defaultFetch = vi.fn(function (this: unknown) {
+      expect(this).toBe(globalThis);
+      return Promise.resolve(new Response(
+        JSON.stringify(liveSnapshot()),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ));
+    });
+    globalThis.fetch = defaultFetch;
+    try {
+      const repository = new HttpTopologyRepository(
+        'https://platform.test',
+        () => 'short-lived-token',
+      );
+
+      await expect(repository.getSnapshot(request)).resolves.toMatchObject({ synthetic: false });
+      expect(defaultFetch).toHaveBeenCalledOnce();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('loads, authenticates, validates, and scope-checks a live snapshot', async () => {
     const fetchTopology = vi.fn<TopologyFetch>().mockResolvedValue(new Response(
       JSON.stringify(liveSnapshot()),
