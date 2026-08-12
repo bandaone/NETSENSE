@@ -28,6 +28,7 @@ export class HttpTopologyRepository implements TopologyRepository {
     baseUrl: string,
     private readonly accessToken: AccessTokenProvider,
     private readonly fetchTopology: TopologyFetch = browserFetch,
+    private readonly allowDevelopmentProxyAuthentication = false,
   ) {
     this.baseUrl = normalizedBaseUrl(baseUrl);
   }
@@ -37,7 +38,12 @@ export class HttpTopologyRepository implements TopologyRepository {
     signal?: AbortSignal,
   ): Promise<TopologySnapshot> {
     const token = (await this.accessToken())?.trim();
-    if (!token) throw new TopologyAuthenticationError();
+    if (!token && !this.allowDevelopmentProxyAuthentication) {
+      throw new TopologyAuthenticationError();
+    }
+
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
 
     let response: Response;
     try {
@@ -45,10 +51,7 @@ export class HttpTopologyRepository implements TopologyRepository {
         `${this.baseUrl}/api/v1/sites/${encodeURIComponent(request.siteId)}/topology`,
         {
           method: 'GET',
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers,
           cache: 'no-store',
           credentials: 'omit',
           signal,

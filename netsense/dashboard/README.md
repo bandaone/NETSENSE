@@ -49,6 +49,21 @@ source file, URL, or persistent local storage. Production deployment must
 provide same-origin `/api` routing and replace this interim session bridge with
 the reviewed identity integration.
 
+For an authorised loopback pilot that must be inspected from multiple local
+browser surfaces, Vite can authenticate its server-side `/api` proxy from an
+owner-only token file:
+
+```bash
+export VITE_NETSENSE_DEV_PROXY_AUTH=true
+export NETSENSE_DEV_PROXY_TOKEN_FILE=/absolute/private/path/operator.jwt
+```
+
+This development-only path accepts only a regular, non-symlink file owned by
+the Vite process user with no group/other permissions, and only when the proxy
+target is loopback. The token never enters browser storage, URLs, client source,
+or `VITE_` variables. Production builds ignore this bridge and still require an
+authenticated user session.
+
 The header provides two calibrated display environments: Operations Dark for
 low-light monitoring and Daylight for bright offices, field use, and demos.
 The choice persists in the browser and preserves identical topology semantics.

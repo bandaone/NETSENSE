@@ -53,6 +53,12 @@ directory and were not committed.
    the canvas. Sparse maps now have a bounded automatic zoom policy and concise
    node labels; health, coverage, addresses, and evidence remain available
    through semantic styling, hover, selection, and detail views.
+5. A token placed in tab-scoped storage made the dedicated Chrome inspection
+   work while an isolated IDE browser correctly failed authentication. The
+   local pilot now uses an explicit development-only Vite proxy bridge that
+   reads an owner-only token file and accepts only loopback platform targets.
+   A clean browser receives no credential and production still requires its own
+   authenticated user session.
 
 ## Important finding not yet resolved in code
 

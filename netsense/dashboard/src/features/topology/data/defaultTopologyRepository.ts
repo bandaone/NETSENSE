@@ -14,8 +14,10 @@ import type { TopologyRepository, TopologySnapshotRequest } from './topologyRepo
 export const ATLAS_SESSION_TOKEN_KEY = 'netsense.atlas.accessToken';
 
 interface TopologyRuntimeEnvironment {
+  DEV?: boolean;
   VITE_NETSENSE_DATA_MODE?: string;
   VITE_NETSENSE_API_BASE_URL?: string;
+  VITE_NETSENSE_DEV_PROXY_AUTH?: string;
   VITE_NETSENSE_TENANT_ID?: string;
   VITE_NETSENSE_ORGANISATION_ID?: string;
   VITE_NETSENSE_SITE_ID?: string;
@@ -91,15 +93,21 @@ export function createTopologyDataSource(
     };
   }
 
+  const allowDevelopmentProxyAuthentication = environment.DEV === true &&
+    environment.VITE_NETSENSE_DEV_PROXY_AUTH?.trim().toLocaleLowerCase() === 'true';
+
   const repository = fetchTopology
     ? new HttpTopologyRepository(
       environment.VITE_NETSENSE_API_BASE_URL || '',
       accessToken,
       fetchTopology,
+      allowDevelopmentProxyAuthentication,
     )
     : new HttpTopologyRepository(
       environment.VITE_NETSENSE_API_BASE_URL || '',
       accessToken,
+      undefined,
+      allowDevelopmentProxyAuthentication,
     );
   return { mode, repository, request };
 }

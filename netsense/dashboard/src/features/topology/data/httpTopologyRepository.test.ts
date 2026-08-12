@@ -87,6 +87,35 @@ describe('HttpTopologyRepository', () => {
     expect(fetchTopology).not.toHaveBeenCalled();
   });
 
+  it('permits credential-less browser transport only for explicit development proxy authentication', async () => {
+    const fetchTopology = vi.fn<TopologyFetch>().mockResolvedValue(new Response(
+      JSON.stringify(liveSnapshot()),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    ));
+    const repository = new HttpTopologyRepository('', () => null, fetchTopology, true);
+
+    await expect(repository.getSnapshot(request)).resolves.toMatchObject({ synthetic: false });
+    expect(fetchTopology).toHaveBeenCalledOnce();
+    expect(fetchTopology.mock.calls[0][1]?.headers).toEqual({ Accept: 'application/json' });
+  });
+
+  it('does not enable development proxy authentication outside Vite development mode', async () => {
+    const fetchTopology = vi.fn<TopologyFetch>();
+    const source = createTopologyDataSource({
+      DEV: false,
+      VITE_NETSENSE_DATA_MODE: 'live',
+      VITE_NETSENSE_DEV_PROXY_AUTH: 'true',
+      VITE_NETSENSE_TENANT_ID: request.tenantId,
+      VITE_NETSENSE_ORGANISATION_ID: request.organisationId,
+      VITE_NETSENSE_SITE_ID: request.siteId,
+    }, () => null, fetchTopology);
+
+    await expect(source.repository.getSnapshot(source.request)).rejects.toBeInstanceOf(
+      TopologyAuthenticationError,
+    );
+    expect(fetchTopology).not.toHaveBeenCalled();
+  });
+
   it.each([
     [401, TopologyAuthenticationError],
     [403, TopologyAccessError],

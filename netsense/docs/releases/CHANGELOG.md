@@ -68,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Investigate default, calibrated sparse-network viewport and labels, and an
   engineering record of routed identity, multi-homing, refresh, and
   capture-scope limits.
+- Loopback-only Vite development proxy authentication from an owner-only token
+  file, allowing live Atlas inspection across isolated local browser surfaces
+  without placing credentials in URLs, client configuration, or browser
+  storage; production session requirements remain unchanged.
 - Expanded Python dependency audit with no known vulnerabilities reported on
   2026-08-10.
 - Verified product rollout boundary separating implemented foundations from
